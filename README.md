@@ -1,0 +1,2 @@
+# riglo
+AutoRig Project
