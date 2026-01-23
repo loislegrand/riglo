@@ -1,7 +1,7 @@
 '''
 Constraint Parent, Point, Orient, Scale
 Nodes de Maths
-
+Offest parent
 
 
 '''
@@ -21,7 +21,7 @@ def MayaNodesVersion():
         
 MayaNodesVersion()
 
-def parentCnst(master, childrens=[], off=False):
+def parentCnst(master, childrens=[], off=False, matx=False):
 
     if len(childrens) == 0:
         cmds.error('You must have child nodes to constraint')
@@ -29,7 +29,7 @@ def parentCnst(master, childrens=[], off=False):
     if master == '':
         cmds.error('You must have parent nodes to constraint')
 
-    if MayaNodesVersion() == True:
+    if matx == False:
         cmds.parentConstraint(childrens, master, mo=off)
 
     else:
@@ -54,3 +54,38 @@ def lineBtw(parentOne, parentTwo):
     #reference curve
     cmds.setAttr(shape + ".overrideEnabled",1)
     cmds.setAttr(shape + ".overrideDisplayType", 2)
+    
+    return CRV
+
+def zeroOut(objects=[]):
+    if len(objects) == 0:
+        cmds.error('You must have child nodes to constraint')
+
+    for i in objects:
+        name = i [4:]
+        Prnt = cmds.listRelatives(i, p=True)[0]
+        print(name)
+        if cmds.objExists('off_'+name) == False:
+            Off = cmds.group(em=True, n='off_'+name)
+            print('Off')
+        elif cmds.objExists('cns_'+name) == False:
+            Off = cmds.group(em=True, n='cns_'+name)
+            print('cns')
+        else:
+            cmds.error('Those objects already exists. Stop being dumb.')
+
+        cmds.matchTransform(Off, i)
+        cmds.parent(Off, Prnt)
+        cmds.parent(i, Off)
+
+def jointOnPoint(objects=[]):
+    if len(objects) == 0:
+        cmds.error('You must have an object')
+
+def spaceSwitch(master, childrens=[]):
+    
+    if len(childrens) == 0:
+        cmds.error('You must have child nodes to constraint')
+
+    if master == '':
+        cmds.error('You must have parent nodes to constraint')

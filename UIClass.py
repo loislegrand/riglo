@@ -99,7 +99,13 @@ class UI():
         tb = cmds.textField('textBoxPath', tx='', en=False)
         
         cmds.separator( h=5)
-        cmds.frameLayout("Tool Box", cll=True, cl=True, mw=10, mh=10)
+        cmds.frameLayout("Tool Box", cll=True, cl=True, mw=10, mh=1)
+        ToolBoxToDo = "Hand with IkFk blend defined by n finger and/or opposable thumb," \
+        " Ribbon Surface, Space Switch (loaded from the basic file), " \
+        "Copy skin, Add dorito setup, " \
+        "Spline to Joint chain"
+        cmds.text( label=ToolBoxToDo, ww=True)
+
 
         cmds.setParent("..")
 

@@ -110,13 +110,20 @@ class GuideLoader():
         guideElbow = cmds.curve(p=spherePts, n='GD_elbow_{}_{}'.format(allInfos[1], allInfos[2]))
         guideWrist = cmds.curve(p=spherePts, n='GD_wrist_{}_{}'.format(allInfos[1], allInfos[2]))
 
-        base.lineBtw(guideShoulder, guideElbow)
-        base.lineBtw(guideElbow, guideWrist)
+        L1 = base.lineBtw(guideShoulder, guideElbow)
+        L2 = base.lineBtw(guideElbow, guideWrist)
 
         cmds.parent(guideShoulder, TopGds) 
         cmds.parent(guideElbow, guideShoulder) 
         cmds.parent(guideWrist, guideElbow)
+        cmds.parent([L1, L2], TopGds)
 
         cmds.xform(guideShoulder, t=(20, 165, 0), ro=(0,0,-45))
         cmds.xform(guideElbow, t=(25, 0, -2))
         cmds.xform(guideWrist, t=(25, 0, 2))
+
+        '''
+        addAttr as metaData to the topGuides : type, toBuild, blend IkFk, twisties, stretchy, bendies, spacialisation
+        list of the limb part
+
+        '''
