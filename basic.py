@@ -1,6 +1,6 @@
 '''
 Constraint Parent, Point, Orient, Scale
-Nodes de Maths
+Nodes de Maths selon la version de Maya
 Offest parent
 
 
@@ -35,7 +35,7 @@ def parentCnst(master, childrens=[], off=False, matx=False):
     else:
         print('Idk how to do it yet, it s a WIP')
               
-def lineBtw(parentOne, parentTwo):
+def lineBtw(parentOne, parentTwo, selectable=False):
     #from two string object names
     #create a line attached between to transforms
     CRV = cmds.curve(d=1, p=[(0,0,0), (0,1,0)], n='LinkBtw_' + parentOne + '_' + parentTwo)
@@ -52,8 +52,9 @@ def lineBtw(parentOne, parentTwo):
     cmds.connectAttr(DecMatxTwo + '.outputTranslate', shape  + '.controlPoints[1]', f=True)
 
     #reference curve
-    cmds.setAttr(shape + ".overrideEnabled",1)
-    cmds.setAttr(shape + ".overrideDisplayType", 2)
+    if selectable == False :
+        cmds.setAttr(shape + ".overrideEnabled",1)
+        cmds.setAttr(shape + ".overrideDisplayType", 2)
     
     return CRV
 
@@ -89,3 +90,38 @@ def spaceSwitch(master, childrens=[]):
 
     if master == '':
         cmds.error('You must have parent nodes to constraint')
+
+def IkFkBlend(jntList=[]):
+
+    #idk
+    print('toto')
+    #Créer le locator de membre
+    locator = cmds.spaceLocator(name="GLOBAL_"+jntList[0])
+    #Matcher le locator sur le premier joint du membre
+    cmds.matchTransform(locator[0], jntList[0])
+    #Ajouter un attribut IKFK (0<x<1)
+    cmds.addAttr(locator[0], attributeType="float", longName="IKFK", minValue=0, maxValue=1, keyable=1)
+    cmds.setAttr(locator[0]+".IKFK", keyable=1)
+
+    #Créer le node reverse
+    reverseNode = cmds.createNode("reverse")
+
+    #Connection locator.IKFK > reverse.inputX
+    cmds.connectAttr((locator[0]+".IKFK"),(reverseNode+".inputX"))
+
+    #Pour chaque articulation sélectionnée :
+    for object in jntList :
+        #Créer une contrainte : C_FK(maitre1) / JNT_IK(maitre2) / Articulation(slave)
+        pConstraint = cmds.parentConstraint(("C_FK_"+object), ("JNT_IK_"+object), object, maintainOffset=1)
+        #Interp Type > "Shortest"
+        cmds.setAttr(pConstraint[0]+".interpType", 2)
+        #Connection locator.IKFK > contrainte.IK
+        cmds.connectAttr((locator[0]+".IKFK"),(pConstraint[0]+".JNT_IK_"+object+"W1"))
+        #Connection reverse.outputX > contrainte.FK
+        cmds.connectAttr((reverseNode+".outputX"),(pConstraint[0]+".C_FK_"+object+"W0"))
+
+    #Parentages : "JNT_IK_" fils de locator GLOBAL / Locator GLOBAL fils de "RIGGING" 
+    cmds.parent("JNT_IK_"+selList[0], locator[0])
+
+    #Selection du locator GLOBAL
+    cmds.select(locator[0])

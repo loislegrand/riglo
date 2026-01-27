@@ -103,7 +103,8 @@ class UI():
         ToolBoxToDo = "Hand with IkFk blend defined by n finger and/or opposable thumb," \
         " Ribbon Surface, Space Switch (loaded from the basic file), " \
         "Copy skin, Add dorito setup, " \
-        "Spline to Joint chain"
+        "Spline to Joint chain" \
+        "Add Inertia and Ergonomic (foot roll and scapula)"
         cmds.text( label=ToolBoxToDo, ww=True)
 
 

@@ -33,7 +33,7 @@ reload(base)
         '''
 class GuideLoader():
     def __init__(self, side='L', part='arm',
-                 joint_list=None,
+                 joint_list=[],
                  alias_list=None,
                  pole_vector=None,
                  remove_guides=False,
@@ -106,17 +106,9 @@ class GuideLoader():
 
         TopGds = cmds.group(em=True, n='GDs_{}_{}_{}'.format(allInfos[0], allInfos[1], allInfos[2]))
 
-        guideShoulder = cmds.curve(p=spherePts, n='GD_shoulder_{}_{}'.format(allInfos[1], allInfos[2]))
-        guideElbow = cmds.curve(p=spherePts, n='GD_elbow_{}_{}'.format(allInfos[1], allInfos[2]))
-        guideWrist = cmds.curve(p=spherePts, n='GD_wrist_{}_{}'.format(allInfos[1], allInfos[2]))
-
-        L1 = base.lineBtw(guideShoulder, guideElbow)
-        L2 = base.lineBtw(guideElbow, guideWrist)
-
-        cmds.parent(guideShoulder, TopGds) 
-        cmds.parent(guideElbow, guideShoulder) 
-        cmds.parent(guideWrist, guideElbow)
-        cmds.parent([L1, L2], TopGds)
+        guideShoulder = cmds.joint(n='GD_shoulder_{}_{}'.format(allInfos[1], allInfos[2]))
+        guideElbow = cmds.joint(n='GD_elbow_{}_{}'.format(allInfos[1], allInfos[2]))
+        guideWrist = cmds.joint(n='GD_wrist_{}_{}'.format(allInfos[1], allInfos[2]))
 
         cmds.xform(guideShoulder, t=(20, 165, 0), ro=(0,0,-45))
         cmds.xform(guideElbow, t=(25, 0, -2))
@@ -127,3 +119,21 @@ class GuideLoader():
         list of the limb part
 
         '''
+
+        self.joint_list.append(guideShoulder)
+        self.joint_list.append(guideElbow)
+        self.joint_list.append(guideWrist)
+        print(self.joint_list)
+
+        listAttributs = {'type': 'enum', 'toBuild': 'bool', 'BlendIkFk' : 'bool', 'twist': 'bool', 'stretch': 'bool', 'bend': 'bool'}
+        
+        for i in listAttributs:
+            type = listAttributs[i]
+            if type == 'enum':
+                typeLimb = allInfos[0]
+                cmds.addAttr(TopGds, ln=i, at=type, k=True, enumName=typeLimb)
+            else:
+                
+                cmds.addAttr(TopGds, ln=i, at=type, k=True, dv=True)
+            
+        
