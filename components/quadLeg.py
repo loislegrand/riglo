@@ -11,10 +11,45 @@ import RigLo.components.shapes as shapes
   '''
 
 
+# TO CHANGE, it is repeated in 2 files
+def getUIsInfos( *args):
+
+        LimbType = cmds.optionMenu('LimbLimbMenu', q=True, v=True)
+
+        Cent = cmds.optionMenu('LimbSide_02', q=True, v=True)
+
+        Lats = cmds.optionMenu('LimbSide_01', q=True, v=True)
+
+        Twist = cmds.checkBox('LimbTwistBox', q=True, v=True)
+        Stretch = cmds.checkBox('LimbStretchBox', q=True, v=True)
+        Bend = cmds.checkBox('LimbBendBox', q=True, v=True)
+
+        print('============================================================')
+
+        print('This limb goes is on ' + Lats + ' ' + Cent + LimbType)
+        print('Twisties ? : ', Twist)
+        print('Strechy ? : ', Stretch)
+        print('Bendies ? : ', Bend)
+
+        allInfos = [LimbType, Cent, Lats, Twist, Stretch, Bend]
+
+        return allInfos
+
+
 def loadGuidesQuadLeg():
+
+    TopJoints = cmds.joint(p=(0, 95, 53))
+    cmds.joint(p=(0, 48, 55))
+    cmds.joint(p=(0, 20, 51))
+    cmds.joint(p=(0, 8, 58))
+    cmds.joint(p=(0, 0, 60))
+
     #select a top bones 
-    TopJoints = cmds.ls(sl=True)
     print(TopJoints)
+
+def buildGuidesQuadLeg():
+    TopJoints = []
+    #list of topjoint to build with quad setup
 
     for JNT in TopJoints:
         
@@ -99,7 +134,7 @@ def loadGuidesQuadLeg():
         cmds.matchTransform(TopGroupe, mainJntChain[3],pos=True)
         cmds.matchTransform(OriGroupe, mainJntChain[4],pos=True)
         
-        if cmds.getAttr(JNT+'.translateX')>0:
+        if getUIsInfos()[2] == 'Left':
             PosX = 1
         else:
             PosX = -1

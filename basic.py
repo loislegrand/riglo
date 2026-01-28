@@ -121,7 +121,7 @@ def IkFkBlend(jntList=[]):
         cmds.connectAttr((reverseNode+".outputX"),(pConstraint[0]+".C_FK_"+object+"W0"))
 
     #Parentages : "JNT_IK_" fils de locator GLOBAL / Locator GLOBAL fils de "RIGGING" 
-    cmds.parent("JNT_IK_"+selList[0], locator[0])
+    cmds.parent("JNT_IK_"+jntList[0], locator[0])
 
     #Selection du locator GLOBAL
     cmds.select(locator[0])
