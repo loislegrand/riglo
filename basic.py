@@ -125,3 +125,36 @@ def IkFkBlend(jntList=[]):
 
     #Selection du locator GLOBAL
     cmds.select(locator[0])
+
+def getUIsInfos(UiPart='_', printInfos=False):
+
+        LimbType = cmds.optionMenu(UiPart+'LimbMenu', q=True, v=True)
+
+        Cent = cmds.optionMenu(UiPart+'Side_02', q=True, v=True)
+
+        Lats = cmds.optionMenu(UiPart+'Side_01', q=True, v=True)
+
+        Twist = cmds.checkBox(UiPart+'TwistBox', q=True, v=True)
+        Stretch = cmds.checkBox(UiPart+'StretchBox', q=True, v=True)
+        Bend = cmds.checkBox(UiPart+'BendBox', q=True, v=True)
+
+        if printInfos == True:
+            print('============================================================')
+
+            print('This ' + LimbType + ' goes on ' + Lats + ' ' + Cent )
+            print('Twisties ? : ', Twist)
+            print('Strechy ? : ', Stretch)
+            print('Bendies ? : ', Bend)
+
+        allInfos = [LimbType, Cent, Lats, Twist, Stretch, Bend]
+
+        return allInfos
+
+def mirror(symmetry=False, jointChain = ''):
+    
+    cmds.select(jointChain)
+    cmds.mirrorJoint(mirrorYZ=True, mirrorBehavior=True, searchReplace=( "_Left", "_Right"))
+    
+
+    if symmetry == True:
+        cmds.delete(jointChain)

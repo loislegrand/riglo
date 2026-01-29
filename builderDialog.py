@@ -2,9 +2,9 @@ import maya.cmds as cmds
 import maya.mel as mel
 import os
 from importlib import reload
-import RigLo.components.arm as arm
+import RigLo.components.guides as gd
 
-reload(arm)
+reload(gd)
 
 def subMenu(name='Component', color=(0.7,0.7,0.7), dependencies=''):
     '''
@@ -48,13 +48,13 @@ def subMenu(name='Component', color=(0.7,0.7,0.7), dependencies=''):
     cmds.columnLayout(adjustableColumn=True)
     cmds.checkBox(name + 'TwistBox', label='Twisty', ann='Or Roll Joints', value=True)
     cmds.checkBox(name + 'StretchBox', label='Stretchy', ann='Strechy limb if checked', value=True)
-    cmds.checkBox(name + 'BendBox', label='Bendies', ann='Add bendies if checked', value=False)
+    cmds.checkBox(name + 'BendBox', label='Bendies', ann='Add bendies if checked', value=True)
 
     cmds.text(label='  ',al='center')
     cmds.iconTextButton(label='Load Guides',style='iconAndTextVertical',fn='boldLabelFont', 
                         i1='locator.png', i2='fileNew.png',
                         al='center', ann='Create Guides with the wanted spec', bgc=(.4,.4,.4)
-                        , c=lambda *args: arm.GuideLoader().loadGuidesArm()
+                        , c=lambda *args: gd.GuideLoader().guideType()
                         )
     
     return name
