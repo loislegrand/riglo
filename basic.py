@@ -158,3 +158,30 @@ def mirror(symmetry=False, jointChain = ''):
 
     if symmetry == True:
         cmds.delete(jointChain)
+
+def jntOrient(lat='', jntList=[]):
+    if len(jntList) == 0:
+        jntList = cmds.ls(sl=True)
+    
+    if lat == '':
+        if cmds.getAttr(jntList[0]+'.translateX')<0:
+            lat='Right'
+        else:
+            lat='Left'
+
+    reference = cmds.group(em=True)
+
+    for jnt in jntList:
+        cmds.joint(e=True, oj='xzy', secondaryAxisOrient='zup')
+
+        if lat == 'Right':
+            value = cmds.getAttr(jnt+'.jointOrientY')
+            value += 180
+            cmds.setAttr(jnt+'.jointOrientY', value)
+            
+            cmds.matchTransform(child, reference, pos=True, rot=False)
+
+            child = cmds.listRelatives(jnt, children=True)
+            cmds.matchTransform(reference, child)
+
+    cmds.delete(reference)

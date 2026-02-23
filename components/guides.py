@@ -116,9 +116,9 @@ class GuideLoader():
 
         TopGds = self.hierarchyGuides()
         
-        guideArm = cmds.joint(n='GD_shoulder_{}_{}'.format(allInfos[1], allInfos[2]))
-        guideForearm = cmds.joint(n='GD_elbow_{}_{}'.format(allInfos[1], allInfos[2]))
-        guideHand = cmds.joint(n='GD_wrist_{}_{}'.format(allInfos[1], allInfos[2]))
+        guideArm = cmds.joint(n='GD_shoulder_{}_Left'.format(allInfos[1]))
+        guideForearm = cmds.joint(n='GD_elbow_{}_Left'.format(allInfos[1]))
+        guideHand = cmds.joint(n='GD_wrist_{}_Left'.format(allInfos[1]))
 
         cmds.xform(guideArm, t=(20, 165, 0), ro=(0,0,-45))
         cmds.xform(guideForearm, t=(25, 0, -2))
@@ -149,11 +149,11 @@ class GuideLoader():
         else:
             reverse = 45
 
-        guideArm = cmds.joint(p=(9, 95, 53), n='GD_arm_{}_{}'.format(allInfos[1], allInfos[2]))
-        guideForearm = cmds.joint(p=(9, 48, reverse), n='GD_forearm_{}_{}'.format(allInfos[1], allInfos[2]))
-        guideHand = cmds.joint(p=(9, 20, 51), n='GD_hand_{}_{}'.format(allInfos[1], allInfos[2]))
-        guideHandEnd = cmds.joint(p=(9, 8, 58), n='GD_finger_{}_{}'.format(allInfos[1], allInfos[2]))
-        cmds.joint(p=(9, 0, 60), n='GD_fingerEnd_{}_{}'.format(allInfos[1], allInfos[2]))
+        guideArm = cmds.joint(p=(9, 95, 53), n='GD_arm_{}_Left'.format(allInfos[1]))
+        guideForearm = cmds.joint(p=(9, 48, reverse), n='GD_forearm_{}_Left'.format(allInfos[1]))
+        guideHand = cmds.joint(p=(9, 20, 51), n='GD_hand_{}_Left'.format(allInfos[1]))
+        guideHandEnd = cmds.joint(p=(9, 8, 58), n='GD_finger_{}_Left'.format(allInfos[1]))
+        guideEnd = cmds.joint(p=(9, 0, 60), n='GD_fingerEnd_{}_Left'.format(allInfos[1]))
 
         self.joint_list.append(guideArm)
         self.joint_list.append(guideForearm)
@@ -174,14 +174,30 @@ class GuideLoader():
 
         allInfos = bs.getUIsInfos(UiPart='Limb', printInfos=True)
 
-        guideUpLeg = cmds.joint(p=(9, 90, 2.5), n='GD_upLeg_{}_{}'.format(allInfos[1], allInfos[2]))
-        guideLowLeg = cmds.joint(p=(9, 50, 2.5), n='GD_lowLeg_{}_{}'.format(allInfos[1], allInfos[2]))
-        guideFoot = cmds.joint(p=(9, 10, 0), n='GD_foot_{}_{}'.format(allInfos[1], allInfos[2]))
-        guideToes = cmds.joint(p=(9, 3, 12), n='GD_toes_{}_{}'.format(allInfos[1], allInfos[2]))
-        guideToesEnd = cmds.joint(p=(9, 3, 20), n='GD_toesEnd_{}_{}'.format(allInfos[1], allInfos[2]))
+        guideUpLeg = cmds.joint(p=(9, 90, 2.5), n='GD_upLeg_{}_Left'.format(allInfos[1]))
+        guideLowLeg = cmds.joint(p=(9, 50, 2.5), n='GD_lowLeg_{}_Left'.format(allInfos[1]))
+        guideFoot = cmds.joint(p=(9, 10, 0), n='GD_foot_{}_Left'.format(allInfos[1]))
+        guideToes = cmds.joint(p=(9, 3, 12), n='GD_toes_{}_Left'.format(allInfos[1]))
+        guideToesEnd = cmds.joint(p=(9, 3, 20), n='GD_toesEnd_{}_Left'.format(allInfos[1]))
+
+        self.joint_list.append(guideUpLeg)
+        self.joint_list.append(guideLowLeg)
+        self.joint_list.append(guideFoot)
+        self.joint_list.append(guideToes)
 
         if allInfos[2] == 'Right':
             print(guideUpLeg)
             bs.mirror(symmetry=True, jointChain = guideUpLeg)
         
         return self.joint_list
+
+    def searchConstruct(self):
+
+        list = cmds.ls('GDs_*')
+
+        toBuildLs = []
+        for inst in list:
+            if cmds.getAttr(inst + '.toBuild'):
+                toBuildLs.append(inst)
+        
+        return toBuildLs
