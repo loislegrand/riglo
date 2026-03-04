@@ -112,7 +112,7 @@ class GuideLoader():
 
         allInfos = bs.getUIsInfos(UiPart='Limb', printInfos=True)
 
-        spherePts = shapes.curveParameter(curveType='sphere')
+        #spherePts = shapes.curveParameter(curveType='sphere')
 
         TopGds = self.hierarchyGuides()
         
@@ -155,10 +155,32 @@ class GuideLoader():
         guideHandEnd = cmds.joint(p=(9, 8, 58), n='GD_finger_{}_Left'.format(allInfos[1]))
         guideEnd = cmds.joint(p=(9, 0, 60), n='GD_fingerEnd_{}_Left'.format(allInfos[1]))
 
+        OutNode = cmds.spaceLocator(n='LOC_Out_'+allInfos[1])[0]
+        InNode = cmds.spaceLocator(n='LOC_In_'+allInfos[1])[0]
+        ToeRoll = cmds.spaceLocator(n='LOC_ToeRoll_'+allInfos[1])[0]
+        HeelRoll = cmds.spaceLocator(n='LOC_HeelRoll_'+allInfos[1])[0]
+        cmds.parent(OutNode, InNode, ToeRoll, HeelRoll, guideEnd)
+
+        if bs.getUIsInfos()[2] == 'Left':
+            PosX = 1
+        elif bs.getUIsInfos()[2] == 'Right':
+            PosX = -1
+        else:
+            PosX = 0
+            
+        cmds.setAttr(OutNode+'.translateX',PosX*8)
+        cmds.setAttr(InNode+'.translateX',PosX*-6)
+        cmds.setAttr(ToeRoll+'.translateZ',9)
+        cmds.setAttr(HeelRoll+'.translateZ',-6)
+
         self.joint_list.append(guideArm)
         self.joint_list.append(guideForearm)
         self.joint_list.append(guideHand)
         self.joint_list.append(guideHandEnd)
+        self.joint_list.append(OutNode)
+        self.joint_list.append(InNode)
+        self.joint_list.append(ToeRoll)
+        self.joint_list.append(HeelRoll)
 
         if allInfos[2] == 'Right':
             print(guideArm)

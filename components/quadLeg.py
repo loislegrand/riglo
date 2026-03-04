@@ -96,19 +96,8 @@ def buildGuidesQuadLeg():
         HeelRoll = cmds.spaceLocator(n='LOC_HeelRoll_'+JNT[-4:])[0]
         cmds.parent(OutNode,InNode,ToeRoll,HeelRoll,OriGroupe)
         
-        
         cmds.matchTransform(TopGroupe, mainJntChain[3],pos=True)
         cmds.matchTransform(OriGroupe, mainJntChain[4],pos=True)
-        
-        if getUIsInfos()[2] == 'Left':
-            PosX = 1
-        else:
-            PosX = -1
-            
-        cmds.setAttr(OutNode+'.translateX',PosX*8)
-        cmds.setAttr(InNode+'.translateX',PosX*-6)
-        cmds.setAttr(ToeRoll+'.translateZ',9)
-        cmds.setAttr(HeelRoll+'.translateZ',-6)
         
         cmds.parent(InNode,OutNode)
         cmds.parent(ToeRoll,InNode)

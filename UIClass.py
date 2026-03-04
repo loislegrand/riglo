@@ -4,6 +4,7 @@ import os
 import RigLo.FbxExport as FbEx
 import RigLo.builderDialog as Bd
 import RigLo.basic as bs
+import RigLo.components
 from importlib import reload
 
 reload(Bd)

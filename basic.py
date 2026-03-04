@@ -7,7 +7,7 @@ Offest parent
 '''
 
 import maya.cmds as cmds
-import components.shapes as shapes
+import RigLo.components.shapes as shapes
 from importlib import reload
 
 reload(shapes)
