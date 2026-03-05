@@ -21,6 +21,8 @@ def createIkRpChain(objs = []):
 
     if len(objs) == 0:
         objs = cmds.ls(selection=True)
+    
+    bs.jntOrient(lat='', jntList=objs)
 
     newChainIk = bs.duplicate(objList=objs)
     cmds.select(cl=True)
@@ -29,3 +31,12 @@ def createIkRpChain(objs = []):
     newChainCtl = bs.controllers(jntList=objs, ctrlShape='stCircle', name='C_Fk_')
     
     bs.IkFkBlend(objs)
+
+    #change rotate order to xzy ou xyz 
+    #Create ctl for the Ik Handle, match wrist orient, parent it 
+    #On global locator, addAttr length Up & Low limb : mult dL into the translate
+    #On global locator, addAttr thickness Up & Low limb : mult dL into the scaleY & Z
+    #create the ribbon btw articulation : create line btw 2 points, match pivot with 1rst object and move a bit forward 
+    #merge elbow controller, and had pin parameter
+    #if GDs Biped leg =>  ajouter les param de inverse foot
+    #

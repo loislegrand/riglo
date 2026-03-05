@@ -124,6 +124,8 @@ class GuideLoader():
         cmds.xform(guideForearm, t=(25, 0, -2))
         cmds.xform(guideHand, t=(25, 0, 2))
 
+        bs.BRA_rotatePlane(guideArm, guideForearm, guideHand)
+
         self.joint_list.append(guideArm)
         self.joint_list.append(guideForearm)
         self.joint_list.append(guideHand)
@@ -134,7 +136,6 @@ class GuideLoader():
             bs.mirror(symmetry=True, jointChain = guideArm)
         
         return self.joint_list
-
 
        
     def loadGuidesQuadLeg(self):
@@ -154,6 +155,8 @@ class GuideLoader():
         guideHand = cmds.joint(p=(9, 20, 51), n='GD_hand_{}_Left'.format(allInfos[1]))
         guideHandEnd = cmds.joint(p=(9, 8, 58), n='GD_finger_{}_Left'.format(allInfos[1]))
         guideEnd = cmds.joint(p=(9, 0, 60), n='GD_fingerEnd_{}_Left'.format(allInfos[1]))
+        
+        bs.BRA_rotatePlane(guideArm, guideForearm, guideHand)
 
         OutNode = cmds.spaceLocator(n='LOC_Out_'+allInfos[1])[0]
         InNode = cmds.spaceLocator(n='LOC_In_'+allInfos[1])[0]
@@ -161,17 +164,17 @@ class GuideLoader():
         HeelRoll = cmds.spaceLocator(n='LOC_HeelRoll_'+allInfos[1])[0]
         cmds.parent(OutNode, InNode, ToeRoll, HeelRoll, guideEnd)
 
-        if bs.getUIsInfos()[2] == 'Left':
+        if allInfos[2] == 'Left':
             PosX = 1
-        elif bs.getUIsInfos()[2] == 'Right':
+        elif allInfos[2] == 'Right':
             PosX = -1
         else:
             PosX = 0
             
-        cmds.setAttr(OutNode+'.translateX',PosX*8)
-        cmds.setAttr(InNode+'.translateX',PosX*-6)
-        cmds.setAttr(ToeRoll+'.translateZ',9)
-        cmds.setAttr(HeelRoll+'.translateZ',-6)
+        cmds.xform(OutNode, ro=(0, 0, 0), t=(PosX*8, 0, 0), s=(1, 1, 1))
+        cmds.xform(InNode, ro=(0, 0, 0), t=(PosX*-6, 0, 0), s=(1, 1, 1))
+        cmds.xform(ToeRoll, ro=(0, 0, 0), t=(0, 0, 9), s=(1, 1, 1))
+        cmds.xform(HeelRoll, ro=(0, 0, 0), t=(0, 0, -6), s=(1, 1, 1))
 
         self.joint_list.append(guideArm)
         self.joint_list.append(guideForearm)
@@ -181,7 +184,7 @@ class GuideLoader():
         self.joint_list.append(InNode)
         self.joint_list.append(ToeRoll)
         self.joint_list.append(HeelRoll)
-
+        
         if allInfos[2] == 'Right':
             print(guideArm)
             bs.mirror(symmetry=True, jointChain = guideArm)
@@ -201,6 +204,8 @@ class GuideLoader():
         guideFoot = cmds.joint(p=(9, 10, 0), n='GD_foot_{}_Left'.format(allInfos[1]))
         guideToes = cmds.joint(p=(9, 3, 12), n='GD_toes_{}_Left'.format(allInfos[1]))
         guideToesEnd = cmds.joint(p=(9, 3, 20), n='GD_toesEnd_{}_Left'.format(allInfos[1]))
+
+        bs.BRA_rotatePlane(guideUpLeg, guideLowLeg, guideFoot)
 
         self.joint_list.append(guideUpLeg)
         self.joint_list.append(guideLowLeg)

@@ -134,7 +134,7 @@ def IkFkBlend(jntList=[]):
     cmds.select(locator[0])
 
 
-def getUIsInfos(UiPart='_', printInfos=False):
+def getUIsInfos(UiPart='', printInfos=False):
 
         LimbType = cmds.optionMenu(UiPart+'LimbMenu', q=True, v=True)
 
@@ -254,7 +254,6 @@ def controllers(jntList=[], ctrlShape='stCircle', name='C_'):
         ctlGrp.append(groupe)
 
 
-
 def duplicate(objList = []):
     
     if len(objList) == 0:
@@ -270,6 +269,89 @@ def duplicate(objList = []):
         prnt = duplicata
         
     return dupChain
+
+
+def BRA_rotatePlane(pointA, pointB, pointC) :
+    
+    # Si le groupe "PREVIZ" n'existe pas, le créer
+    totalPreviz = "PREVIZ"  
+    if not cmds.ls(totalPreviz) :
+        totalPreviz = cmds.group(name= totalPreviz, empty=1)
+    
+    # Création du locator de previz et de son groupe de placement
+    locPreviz = cmds.spaceLocator(name="PV_Previz_"+pointB)
+    grpPreviz = cmds.group(locPreviz[0], name="GRP_Previz_"+pointB)
+
+    # Création du plan de previz
+    planePreviz = cmds.polyCreateFacet(p=[(0, 0, 0), (0, 0, 0), (0, 0, 0)], constructionHistory=0, name="RP_Previz_"+pointB)
+    planeShape = cmds.listRelatives(planePreviz[0], shapes=1)
+    cmds.setAttr(planeShape[0]+".overrideEnabled", 1)
+    cmds.setAttr(planeShape[0]+".overrideColor", 14)
+    
+    # Rangement
+    cmds.parent(grpPreviz, planePreviz, totalPreviz)
+    
+    # Création des nodes
+    aimMatrixNode = cmds.createNode("aimMatrix")
+    cmds.setAttr(aimMatrixNode+".secondaryMode",1)
+    
+    distanceNode = cmds.createNode("distanceBetween")
+    
+    multNodeX = cmds.createNode("multDoubleLinear")
+    cmds.setAttr(multNodeX+".input2",0.5)
+    
+    multNodeZ = cmds.createNode("multDoubleLinear")
+    cmds.setAttr(multNodeZ+".input2",0.75)
+        
+    decomposeMatrixA = cmds.createNode("decomposeMatrix")
+    decomposeMatrixB = cmds.createNode("decomposeMatrix")
+    decomposeMatrixC = cmds.createNode("decomposeMatrix")
+    
+    # Connections
+    cmds.connectAttr(pointA+".worldMatrix[0]", aimMatrixNode+".inputMatrix")
+    cmds.connectAttr(pointB+".worldMatrix[0]", aimMatrixNode+".secondaryTargetMatrix")
+    cmds.connectAttr(pointC+".worldMatrix[0]", aimMatrixNode+".primaryTargetMatrix")
+    cmds.connectAttr(aimMatrixNode+".outputMatrix", grpPreviz+".offsetParentMatrix")
+    cmds.connectAttr(pointA+".worldMatrix[0]", distanceNode+".inMatrix1")
+    cmds.connectAttr(pointC+".worldMatrix[0]", distanceNode+".inMatrix2")
+    cmds.connectAttr(distanceNode+".distance", multNodeX+".input1")
+    cmds.connectAttr(multNodeX+".output", locPreviz[0]+".translateX")
+    cmds.connectAttr(distanceNode+".distance", multNodeZ+".input1")
+    cmds.connectAttr(multNodeZ+".output", locPreviz[0]+".translateY")
+    cmds.connectAttr(pointA+".worldMatrix[0]", decomposeMatrixA+".inputMatrix")
+    cmds.connectAttr(locPreviz[0]+".worldMatrix[0]", decomposeMatrixB+".inputMatrix")
+    cmds.connectAttr(pointC+".worldMatrix[0]", decomposeMatrixC+".inputMatrix")
+    cmds.connectAttr(decomposeMatrixA+".outputTranslate", planeShape[0]+".controlPoints[0]")
+    cmds.connectAttr(decomposeMatrixB+".outputTranslate", planeShape[0]+".controlPoints[1]")
+    cmds.connectAttr(decomposeMatrixC+".outputTranslate", planeShape[0]+".controlPoints[2]")
+    
+    # Paramétrage du look du Locator
+    locShape = cmds.listRelatives(locPreviz[0], shapes=1)
+    locSize = cmds.getAttr(distanceNode+".distance")/20
+    cmds.setAttr(locShape[0]+".localScale", locSize, locSize, locSize)
+    cmds.setAttr(locShape[0]+".overrideEnabled", 1)
+    cmds.setAttr(locShape[0]+".overrideColor", 14)
+    
+    # Lock Channels
+    for obj in [planePreviz[0], locPreviz[0], grpPreviz] :
+        cmds.setAttr(obj+".translate", lock=1)
+        cmds.setAttr(obj+".rotate", lock=1)
+        cmds.setAttr(obj+".scale", lock=1)
+    
+    # Selection (et Return) du Locator de Previz / Print de confirmation
+    cmds.select(locPreviz[0])
+    return locPreviz[0]
+    print("---> Previz Rotate Plane created between "+pointA+", "+pointB+", "+pointC+"<---")
+
+def BRA_rotatePlaneSelection() :
+    
+    # Definir les trois points via la selection
+    selList = cmds.ls(sl=1)
+    if len(selList) != 3 :
+        cmds.error("!!! Please select 3 transforms in the right order to preview the Rotate Plane !!!")
+    
+    BRA_rotatePlane(selList[0], selList[1], selList[2])
+
 
 # converted script from mel to python, and adapted for stand alone use
 # Michael B. Comet - comet@comet-cartoons.com
