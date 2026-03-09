@@ -68,11 +68,45 @@ class UI():
         cmds.setParent("..")
         cmds.showWindow("InfoUI")
 
+    def VersionUI(self):
+        version = cmds.about(v=True)
+
+        # Delete window if it already exists
+        if cmds.window("MayaVersion", exists=True):
+            cmds.deleteUI("MayaVersion")
+
+        # Create window
+        window = cmds.window("MayaVersion", 
+                            title="Maya Version", 
+                            widthHeight=(350, 200), 
+                            sizeable=False, 
+                            menuBar=True)
+
+        cmds.columnLayout(columnAttach=("both", 20), rowSpacing=5)
+
+        cmds.separator(height=10,vis=False)
+        
+        cmds.text(label=f"This is Autodesk Maya  v.{version}",
+                align="right", width=310, wordWrap=True, height=40)
+        
+        if bs.MayaNodesVersion():
+            message = 'The autorig will use nodes from versions prior to 2026 (doubleLinear, ...).'
+        else:
+            message = 'The autorig will use nodes from 2026 versions.'
+
+        cmds.text(label=message,
+                align="left", width=310, wordWrap=True, height=30)
+        
+        cmds.separator(height=20,vis=False)
+
+        cmds.setParent("..")
+        cmds.showWindow("MayaVersion")
+
 
     def limbFrame(self):
         
         cmds.checkBox('MtxCns', label='Matrix Constraint', ann='Create Matrix constraint instead of Maya nativ constraint system', value=False)
-
+        cmds.button(label='Maya Version', c=lambda *args: self.VersionUI(), al='center', ann='Shows the current maya version', h=20)
 
         cmds.separator(h=2)
         Cpnts = cmds.frameLayout("Components", cll=True, cl=False, mw=10, mh=10)
@@ -116,4 +150,6 @@ class UI():
         cmds.button(label='Reorient', c=bs.jntOrient, backgroundColor=(0.2, 0.4, 0.2) ,al='center', ann='')
         cmds.button(label='Build', c=FbEx.exportFbx, backgroundColor=(0.2, 0.3, 0.2) ,al='center', ann='Exporte les bones et la caméra dans 2 fichiers séparés dans le dossier défini plus haut. ')
         cmds.setParent("..")
+
+
         

@@ -33,10 +33,15 @@ def createIkRpChain(objs = []):
     bs.IkFkBlend(objs)
 
     #change rotate order to xzy ou xyz 
+    bs.controllers(jntList=[newChainIk[2]], ctrlShape='cube',sol='ikRPsolver' ,name='C_')
+
     #Create ctl for the Ik Handle, match wrist orient, parent it 
+    cmds.ikHandle(sj=newChainIk[0], ee=newChainIk[2],sol='ikRPsolver' , n='IkH_')
+    
     #On global locator, addAttr length Up & Low limb : mult dL into the translate
-    #On global locator, addAttr thickness Up & Low limb : mult dL into the scaleY & Z
+    #On global locator, addAttr thickness Up & Low limb : mult dL into the scale Y & Z
     #create the ribbon btw articulation : create line btw 2 points, match pivot with 1rst object and move a bit forward 
-    #merge elbow controller, and had pin parameter
+    #merge elbow controller with a roundness parameter : blend rotation of te two ribbons ends, and had pin parameter
     #if GDs Biped leg =>  ajouter les param de inverse foot
-    #
+
+    
