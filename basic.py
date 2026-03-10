@@ -34,7 +34,7 @@ def parentCnst(master, childrens=[], off=False, matx=False):
         cmds.error('You must have parent nodes to constraint')
 
     if matx == False:
-        cmds.parentConstraint(childrens, master, mo=off)
+        cmds.parentConstraint(master, childrens, mo=off)
 
     else:
         print('Idk how to do it yet, it s a WIP')
@@ -172,7 +172,7 @@ def mirror(symmetry=False, jointChain = ''):
 def jntOrient(lat='', jntList=[]):
     if len(jntList) == 0:
         jntList = cmds.ls(sl=True)
-    
+
     if lat == '':
         if cmds.getAttr(jntList[0]+'.translateX')<0:
             lat='Right'
@@ -181,8 +181,10 @@ def jntOrient(lat='', jntList=[]):
 
     reference = cmds.group(em=True)
 
-    for jnt in jntList:
-        cmds.joint(e=True, oj='xzy', secondaryAxisOrient='zup')
+    for jnt in jntList[:-1]:
+        cmds.select(jnt)
+        cmds.FreezeTransformations()
+        cmds.joint(jnt, edit=True, oj='xzy', secondaryAxisOrient='zup')
 
         if lat == 'Right':
             value = cmds.getAttr(jnt+'.jointOrientY')
@@ -193,6 +195,12 @@ def jntOrient(lat='', jntList=[]):
 
             child = cmds.listRelatives(jnt, children=True)
             cmds.matchTransform(reference, child)
+
+    print(jntList[-1:][0])
+    cmds.FreezeTransformations(jntList[-1:][0])
+    cmds.setAttr(jntList[-1:][0] + '.jointOrientX', 0)
+    cmds.setAttr(jntList[-1:][0] + '.jointOrientY', 0)
+    cmds.setAttr(jntList[-1:][0] + '.jointOrientZ', 0)
 
     cmds.delete(reference)
 
@@ -251,7 +259,9 @@ def controllers(jntList=[], ctrlShape='stCircle', name='C_'):
             cmds.setAttr(shape[0]+'.overrideColorG',1)
             cmds.setAttr(shape[0]+'.overrideColorB',0)
         
-        ctlGrp.append(groupe)
+        ctlGrp.append(ctrl)
+    
+    return ctlGrp
 
 
 def duplicate(objList = []):

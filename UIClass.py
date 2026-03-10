@@ -148,7 +148,7 @@ class UI():
 
         cmds.separator( h=5)
         cmds.button(label='Reorient', c=bs.jntOrient, backgroundColor=(0.2, 0.4, 0.2) ,al='center', ann='')
-        cmds.button(label='Build', c=FbEx.exportFbx, backgroundColor=(0.2, 0.3, 0.2) ,al='center', ann='Exporte les bones et la caméra dans 2 fichiers séparés dans le dossier défini plus haut. ')
+        cmds.button(label='Build', c=FbEx.exportFbx, backgroundColor=(0.2, 0.3, 0.2) ,al='center', ann='')
         cmds.setParent("..")
 
 

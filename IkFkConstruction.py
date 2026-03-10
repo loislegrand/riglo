@@ -2,6 +2,7 @@ import pymel.core as pm
 import maya.cmds as cmds
 import RigLo.components.shapes as shapes
 import RigLo.basic as bs
+import RigLo.nodes as nd
 from importlib import reload
 
 reload(bs)
@@ -18,10 +19,16 @@ add a volume parameter
 """
 
 def createIkRpChain(objs = []):
-
+    
     if len(objs) == 0:
         objs = cmds.ls(selection=True)
-    
+
+    topNodeName = cmds.listRelatives(objs[0], p=True)[0]
+    names = topNodeName.split('_')
+    name = ''
+    for n in names[1:]:
+        name += '_' + n 
+
     bs.jntOrient(lat='', jntList=objs)
 
     newChainIk = bs.duplicate(objList=objs)
@@ -33,15 +40,25 @@ def createIkRpChain(objs = []):
     bs.IkFkBlend(objs)
 
     #change rotate order to xzy ou xyz 
-    bs.controllers(jntList=[newChainIk[2]], ctrlShape='cube',sol='ikRPsolver' ,name='C_')
+    IkCtl = bs.controllers(jntList=[newChainIk[2]], ctrlShape='cube',name='C_')
+    print(IkCtl)
 
     #Create ctl for the Ik Handle, match wrist orient, parent it 
-    cmds.ikHandle(sj=newChainIk[0], ee=newChainIk[2],sol='ikRPsolver' , n='IkH_')
-    
+    ikH = cmds.ikHandle(sj=newChainIk[0], ee=newChainIk[2],sol='ikRPsolver' , n='IkH_')
+    print(ikH[0])
+    bs.parentCnst(IkCtl[0], childrens=[ikH[0]], off=False, matx=False)
+
     #On global locator, addAttr length Up & Low limb : mult dL into the translate
+    distNode = cmds.createNode('distanceBetween', n='dist_'+name)
+    cmds.connectAttr(newChainIk[0] + '.worldMatrix', distNode + '.inMatrix1')
+    cmds.connectAttr(newChainIk[2] + '.worldMatrix', distNode + '.inMatrix2')
+
+    distValue = cmds.getAttr(distNode +'.distance')
+    distRatio = cmds.createNode('divide', n='div_' + name)
+    cmds.setAttr(distRatio+'.input2', distValue)
+    cmds.connect(distNode + '.distance', distRatio+'.input2')
+    distMult = nd.multDL(name)
     #On global locator, addAttr thickness Up & Low limb : mult dL into the scale Y & Z
     #create the ribbon btw articulation : create line btw 2 points, match pivot with 1rst object and move a bit forward 
     #merge elbow controller with a roundness parameter : blend rotation of te two ribbons ends, and had pin parameter
     #if GDs Biped leg =>  ajouter les param de inverse foot
-
-    
