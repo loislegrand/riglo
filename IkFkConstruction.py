@@ -49,27 +49,37 @@ def createIkRpChain(objs = []):
     bs.parentCnst(IkCtl[0], childrens=[ikH[0]], off=False, matx=False)
 
     #On global locator, addAttr length Up & Low limb : mult dL into the translate
+    cmds.addAttr(ctlAttr, at="float", longName="Stretch", min=0, max = 1, keyable=1)
+    cmds.addAttr(ctlAttr, at="float", longName="upLimbLength", min=0.05, keyable=1)
+    cmds.addAttr(ctlAttr, at="float", longName="lowLimbLength", min=0.05, keyable=1)
+    cmds.addAttr(ctlAttr, at="float", longName="maxStretch", min=0.05, max=1, keyable=1)
+    cmds.addAttr(ctlAttr, at="float", longName="scale", min=0.05, keyable=1)
+
     distNode = cmds.createNode('distanceBetween', n='dist_'+name)
     cmds.connectAttr(ctlAttr[0] + '.worldMatrix', distNode + '.inMatrix1')
     cmds.connectAttr(IkCtl[0] + '.worldMatrix', distNode + '.inMatrix2')
 
     distRatio = cmds.createNode('divide', n='div_' + name)
-    cmds.setAttr(distRatio+'.input1', cmds.getAttr(distNode +'.distance'))
     
     distMult = nd.multDL(name) #needs to be connected to the global scale parameter
     cmds.setAttr(distMult+'.input1',1)
+    cmds.setAttr(distMult+'.input2', cmds.getAttr(distNode +'.distance'))
 
-    cmds.connectAttr(distNode + '.distance', distRatio+'.input2')
-    cmds.connectAttr(distRatio + '.output', distMult+'.input2')
+    clampRatio = cmds.createNode('clampRange', n='clamp'+name)
+    cmds.connectAttr(distNode + '.distance', distRatio+'.input1')
+    cmds.connectAttr(distRatio + '.output', clampRatio+'.input')
+    cmds.connectAttr(distMult + '.output', distRatio+'.input2')
+    cmds.setAttr(clampRatio+'.minimum', 1)
+    cmds.setAttr(clampRatio+'.maximum', 10)
 
     midMult = nd.multDL('mid'+name)
     cmds.setAttr(midMult+'.input1',cmds.getAttr(objs[1]+'.translateX'))
-    cmds.connectAttr(distMult+'.output', midMult+'.input2')
+    cmds.connectAttr(clampRatio+'.output', midMult+'.input2')
     cmds.connectAttr(midMult+'.output', newChainIk[1]+'.translateX')
 
     lowMult = nd.multDL('low'+name)
     cmds.setAttr(lowMult+'.input1',cmds.getAttr(objs[2]+'.translateX'))
-    cmds.connectAttr(distMult+'.output', lowMult+'.input2')
+    cmds.connectAttr(clampRatio+'.output', lowMult+'.input2')
     cmds.connectAttr(lowMult+'.output', newChainIk[2]+'.translateX')
 
 

@@ -107,6 +107,7 @@ def IkFkBlend(jntList=[]):
     #Matcher le locator sur le premier joint du membre
     cmds.matchTransform(locator[0], jntList[0])
     #Ajouter un attribut IKFK (0<x<1)
+    cmds.addAttr(locator[0], ln="ParameterIkFk", nn="_____", at="enum", en="_____")
     cmds.addAttr(locator[0], attributeType="float", longName="IkFk", minValue=0, maxValue=1, keyable=1)
     cmds.setAttr(locator[0]+".IkFk", keyable=1)
 
