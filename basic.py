@@ -133,6 +133,8 @@ def IkFkBlend(jntList=[]):
     #Selection du locator GLOBAL
     cmds.select(locator[0])
 
+    return locator
+
 
 def getUIsInfos(UiPart='', printInfos=False):
 

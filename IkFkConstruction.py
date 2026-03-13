@@ -37,7 +37,7 @@ def createIkRpChain(objs = []):
     newChainIk = bs.doRename(0, objs=newChainIk, search='1', replace='')
     newChainCtl = bs.controllers(jntList=objs, ctrlShape='stCircle', name='C_Fk_')
     
-    bs.IkFkBlend(objs)
+    ctlAttr = bs.IkFkBlend(objs)
 
     #change rotate order to xzy ou xyz 
     IkCtl = bs.controllers(jntList=[newChainIk[2]], ctrlShape='cube',name='C_')
@@ -50,7 +50,7 @@ def createIkRpChain(objs = []):
 
     #On global locator, addAttr length Up & Low limb : mult dL into the translate
     distNode = cmds.createNode('distanceBetween', n='dist_'+name)
-    cmds.connectAttr(newChainIk[0] + '.worldMatrix', distNode + '.inMatrix1')
+    cmds.connectAttr(ctlAttr[0] + '.worldMatrix', distNode + '.inMatrix1')
     cmds.connectAttr(IkCtl[0] + '.worldMatrix', distNode + '.inMatrix2')
 
     distRatio = cmds.createNode('divide', n='div_' + name)
@@ -62,7 +62,7 @@ def createIkRpChain(objs = []):
     cmds.connectAttr(distNode + '.distance', distRatio+'.input2')
     cmds.connectAttr(distRatio + '.output', distMult+'.input2')
 
-    """midMult = nd.multDL('mid'+name)
+    midMult = nd.multDL('mid'+name)
     cmds.setAttr(midMult+'.input1',cmds.getAttr(objs[1]+'.translateX'))
     cmds.connectAttr(distMult+'.output', midMult+'.input2')
     cmds.connectAttr(midMult+'.output', newChainIk[1]+'.translateX')
@@ -70,8 +70,8 @@ def createIkRpChain(objs = []):
     lowMult = nd.multDL('low'+name)
     cmds.setAttr(lowMult+'.input1',cmds.getAttr(objs[2]+'.translateX'))
     cmds.connectAttr(distMult+'.output', lowMult+'.input2')
-    cmds.connectAttr(midMult+'.output', newChainIk[2]+'.translateX')
-"""
+    cmds.connectAttr(lowMult+'.output', newChainIk[2]+'.translateX')
+
 
     #On global locator, addAttr thickness Up & Low limb : mult dL into the scale Y & Z
     #create the ribbon btw articulation : create line btw 2 points, match pivot with 1rst object and move a bit forward 
