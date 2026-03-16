@@ -220,19 +220,22 @@ def controllers(jntList=[], ctrlShape='stCircle', name='C_'):
     print(jntList)
 
     # Checker si des joints sont selectionnes
-    for t in jntList:
+    """for t in jntList:
         type=cmds.objectType(t)
         if type == 'joint':
             pass
         else:
-            cmds.error('select joint object.')
+            cmds.error('select joint object.')"""
 
     ctlGrp = []
     # Pour chaque joint selectionné :
     for i in jntList:
         print(i)
         #Créer un nurbsCircle(axeX)
-        radius=cmds.getAttr(i+'.radius')
+        if cmds.objectType(i) == 'joint':
+            radius=cmds.getAttr(i+'.radius')
+        else:
+            radius = 1
         ctrl=shapes.shapeMkr(curveType=ctrlShape,name=name+i)
 
         shape=cmds.listRelatives(ctrl,shapes=True)
@@ -365,6 +368,17 @@ def BRA_rotatePlaneSelection() :
     
     BRA_rotatePlane(selList[0], selList[1], selList[2])
 
+
+def listExtraAttr(obj):
+    attrs = cmds.listAttr(obj,ud= True)
+
+    niceNameList = {}
+    for a in attrs:
+        l = cmds.attributeName("{0}.{1}".format(obj, a), l= True)
+        n= cmds.attributeName("{0}.{1}".format(obj, a), n= True)
+        niceNameList[l] = n  
+
+    return niceNameList
 
 # converted script from mel to python, and adapted for stand alone use
 # Michael B. Comet - comet@comet-cartoons.com

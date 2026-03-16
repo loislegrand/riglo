@@ -4,28 +4,7 @@ import RigLo.components.shapes as shapes
 import RigLo.basic as bs
 
 
-#NEED to define number of ctrl and number of joints
-#the number of controller = number of spans 
-def createFrstCrv(*args):
-    cmds.CreateCurveFromPoly()
-    name = cmds.textField("RibbonName", query=True, text=True)
-    FrstCrv=cmds.rename('CRV_second_'+name)
-    cmds.FreezeTransformations()
-    cmds.DeleteHistory()
-    cmds.CenterPivot()
-
-    
-def createScndCrv(*args):
-    cmds.CreateCurveFromPoly()
-    name = cmds.textField("RibbonName", query=True, text=True)
-    FrstCrv=cmds.rename('CRV_first_'+name)
-    cmds.FreezeTransformations()
-    cmds.DeleteHistory()
-    cmds.CenterPivot()
-
-
-def createSurface():
-    name = cmds.textField("RibbonName", query=True, text=True)
+def createSurface(name, crv1, crv2):
     cmds.select('CRV_first_'+name)
     cmds.select('CRV_second_'+name,add=True)
     Surface=cmds.loft(n='SURF_'+name)[0]
@@ -47,6 +26,9 @@ def surfaceRibbonsJoint(jointNum, ctrlNum ):
     nb_jnts = int(cmds.textField("jntNumb", query=True, text=True))
     sel='SURF_'+name
     shape=cmds.listRelatives(sel,s=True)
+
+    cmds.select(MastJoint)
+    MastJoint=cmds.joint(n='JNT_Master_'+name)
     
     for div in range(nb_jnts+1):
         U=0.5
@@ -112,14 +94,12 @@ def surfaceRibbonsJoint(jointNum, ctrlNum ):
         cmds.connectAttr(decMatxJnt+'.outputRotate',jnt+'.rotate')
         cmds.connectAttr(decMatxJnt+'.outputTranslate',jnt+'.translate')
         cmds.setAttr(jnt+'.inheritsTransform',0)
+
+        jointOld = jnt
     
     div_grp_sel=cmds.select('GRP_'+name+'*')
     Grp_offset=cmds.group(n='GRP_offset_'+name)
     
-    cmds.select(cl=True)
-    MastJoint=cmds.joint(n='JNT_Master_'+name)
-    cmds.select(sel,add=True)
-    cmds.MatchTransform()
     cmds.parent(skList,MastJoint)
     
 def surfaceRibbonsCtrl(*args):
@@ -206,19 +186,15 @@ def surfaceRibbonsCtrl(*args):
 
 
 
-def createRibbon(*args):
-    ribbon_name = cmds.textField("RibbonName", query=True, text=True)
-    jointNumber = int(cmds.textField("jntNumb", query=True, text=True))
-    ctrlNumber = int(cmds.textField("ctrlNumb", query=True, text=True))
-    #UVdirection = cmds.checkBox("Inverse U and V directions", query=True, text=True)
+def createRibbon(crv1, crv2, name, jntNum, ctlNum):
     
     createSurface()
     surfaceRibbonsJoint()
     surfaceRibbonsCtrl()
     
     #del unused crv
-    cmds.select('CRV_first_*')
-    cmds.select('CRV_second_*',add=True)
+    cmds.select(crv1)
+    cmds.select(crv2,add=True)
     cmds.delete()
     
 
