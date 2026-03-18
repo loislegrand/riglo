@@ -32,6 +32,7 @@ def createIkRpChain(objs = []):
         name += '_' + n 
 
     bs.jntOrient(lat='', jntList=objs)
+    objs = bs.doRename(0, objs=objs, search='GD_', replace='')
 
     newChainIk = bs.duplicate(objList=objs)
     cmds.select(cl=True)
@@ -43,14 +44,15 @@ def createIkRpChain(objs = []):
 
     #change rotate order to xzy ou xyz 
     IkCtl = bs.controllers(jntList=[newChainIk[2]], ctrlShape='cube',name='C_')
-    print(IkCtl)
 
     switchCtl = bs.controllers(jntList='', ctrlShape='cross', name='IkSwitch_')
 
     #Create ctl for the Ik Handle, match wrist orient, parent it 
     ikH = cmds.ikHandle(sj=newChainIk[0], ee=newChainIk[2],sol='ikRPsolver' , n='IkH_')
-    print(ikH[0])
-    bs.parentCnst(IkCtl[0], childrens=[ikH[0]], off=False, matx=False)
+    PV = bs.controllers(jntList = ['PV_Previz_GD_'+objs[1]] ,ctrlShape='diamond', name='C_PV_')[0]
+    cmds.matchTransform(PV, objs[1], rot=True)
+
+    bs.parentCnst([IkCtl[0]], ikH[0], off=False, matx=False)
 
     #On global locator, addAttr length Up & Low limb : mult dL into the translate
     cmds.addAttr(ctlAttr, at="float", longName="stretch", min=0, max = 1, dv=1, keyable=1)
@@ -110,6 +112,9 @@ def createIkRpChain(objs = []):
         print(l, n)
         cmds.addAttr(switchCtl, ln = l, nn=n, proxy=ctlAttr[0] + '.' + l )
 
+
+    #create the ribbon btw articulation : create line btw 2 points, match pivot with 1rst object and move a bit forward 
+
     crv1tmp = bs.lineBtw(objs[0], objs[1], selectable=True)
     crv2tmp = bs.lineBtw(objs[1], objs[2], selectable=True)
 
@@ -132,12 +137,18 @@ def createIkRpChain(objs = []):
     cmds.parent(ribbonCrvTmp, w=True)
 
 
-    rib.createRibbon(crvUp1, crvUp2, name='ribUp'+name, jntNum=4, ctlNum=2)
-    rib.createRibbon(crvDwn1, crvDwn2, name='ribDwn'+name, jntNum=4, ctlNum=2)
+    ribUp = rib.createRibbon(crvUp1, crvUp2, name='ribUp'+name, jntNum=4, ctlNum=2)
+    ribDwn = rib.createRibbon(crvDwn1, crvDwn2, name='ribDwn'+name, jntNum=4, ctlNum=2)
 
-    """
-    cmds.delete(cmds.listConnections(cmds.listRelatives(crv2, s=True)))"""
+    print(ribUp)
 
-    #create the ribbon btw articulation : create line btw 2 points, match pivot with 1rst object and move a bit forward 
+    midCtl = bs.controllers(jntList = [objs[1]] ,ctrlShape='crossArrow', name='C_mid_')
+
+    pvPtCstrnt = bs.parentCnst([objs[1], PV], cmds.listRelatives(midCtl, p=True)[0])
+    cmds.addAttr(pvPtCstrnt, ln='pvPin')
+    if cmds.objectType(pvPtCstrnt) == 'parentConstraint':
+        cmds.connectAttr()
+
+
     #merge elbow controller with a roundness parameter : blend rotation of te two ribbons ends, and had pin parameter
     #if GDs Biped leg =>  ajouter les param de inverse foot

@@ -25,20 +25,21 @@ def MayaNodesVersion():
     return Old
 
 
-def parentCnst(master, childrens=[], off=False, matx=False):
+def parentCnst(masters, children, off=False, matx=False):
 
-    if len(childrens) == 0:
-        cmds.error('You must have child nodes to constraint')
-
-    if master == '':
+    if len(masters) == 0:
         cmds.error('You must have parent nodes to constraint')
 
+    if children == '':
+        cmds.error('You must have child node to constraint')
+
     if matx == False:
-        cmds.parentConstraint(master, childrens, mo=off)
+        cstrnt = cmds.parentConstraint(masters, children, mo=off)
 
     else:
         print('Idk how to do it yet, it s a WIP')
 
+    return cstrnt
 
 def lineBtw(parentOne, parentTwo, selectable=False):
     #from two string object names
@@ -71,13 +72,10 @@ def zeroOut(objects=[]):
     for i in objects:
         name = i [4:]
         Prnt = cmds.listRelatives(i, p=True)[0]
-        print(name)
         if cmds.objExists('off_'+name) == False:
             Off = cmds.group(em=True, n='off_'+name)
-            print('Off')
         elif cmds.objExists('cns_'+name) == False:
             Off = cmds.group(em=True, n='cns_'+name)
-            print('cns')
         else:
             cmds.error('Those objects already exists. Stop being dumb.')
 
@@ -112,7 +110,7 @@ def IkFkBlend(jntList=[]):
     cmds.setAttr(locator[0]+".IkFk", keyable=1)
 
     #Créer le node reverse
-    reverseNode = cmds.createNode("reverse")
+    reverseNode = cmds.createNode("reverse", n='rev_'+jntList[0])
 
     #Connection locator.IKFK > reverse.inputX
     cmds.connectAttr((locator[0]+".IkFk"),(reverseNode+".inputX"))
@@ -199,7 +197,6 @@ def jntOrient(lat='', jntList=[]):
             child = cmds.listRelatives(jnt, children=True)
             cmds.matchTransform(reference, child)
 
-    print(jntList[-1:][0])
     cmds.FreezeTransformations(jntList[-1:][0])
     cmds.setAttr(jntList[-1:][0] + '.jointOrientX', 0)
     cmds.setAttr(jntList[-1:][0] + '.jointOrientY', 0)
@@ -217,7 +214,6 @@ def controllers(jntList=[], ctrlShape='stCircle', name='C_'):
     else:
         pass
 
-    print(jntList)
 
     # Checker si des joints sont selectionnes
     """for t in jntList:
@@ -230,7 +226,6 @@ def controllers(jntList=[], ctrlShape='stCircle', name='C_'):
     ctlGrp = []
     # Pour chaque joint selectionné :
     for i in jntList:
-        print(i)
         #Créer un nurbsCircle(axeX)
         if cmds.objectType(i) == 'joint':
             radius=cmds.getAttr(i+'.radius')
@@ -356,8 +351,9 @@ def BRA_rotatePlane(pointA, pointB, pointC) :
     
     # Selection (et Return) du Locator de Previz / Print de confirmation
     cmds.select(locPreviz[0])
-    return locPreviz[0]
+    return locPreviz[0], planePreviz[0]
     print("---> Previz Rotate Plane created between "+pointA+", "+pointB+", "+pointC+"<---")
+
 
 def BRA_rotatePlaneSelection() :
     

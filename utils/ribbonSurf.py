@@ -95,11 +95,14 @@ def surfaceRibbonsJoint(jointNum, ctrlNum, name):
     
     div_grp_sel=cmds.select('GRP_'+name+'*')
     Grp_offset=cmds.group(n='GRP_offset_'+name)
+
+    return skList
     
     
 def surfaceRibbonsCtrl(jointNum, ctrlNum, name):
     
-    jntList=[]
+    jntList = []
+    grpList = []
     sel='SURF_'+name
     shape=cmds.listRelatives(sel,s=True)
     
@@ -111,7 +114,6 @@ def surfaceRibbonsCtrl(jointNum, ctrlNum, name):
         P_on_S=cmds.createNode('pointOnSurfaceInfo',n='PoS_RIB_'+name+'_0'+str(div))
         #node matrice four by four 
         Mat_4x4=cmds.createNode('fourByFourMatrix', n='Mat_RIB_'+name+'_0'+str(div))
-        print(Mat_4x4)
         
         #connect attr
         cmds.connectAttr(P_on_S+'.result.position.positionX',Mat_4x4+'.in30')
@@ -141,6 +143,7 @@ def surfaceRibbonsCtrl(jointNum, ctrlNum, name):
         
         #Créer le groupe de placement
         groupe=cmds.group(ctrl,n='GRP_C_'+name+'_0'+str(div))
+        grpList.append(groupe)
         
         cmds.setAttr(P_on_S+'.parameterU', U)
         cmds.setAttr(P_on_S+'.parameterV', V)
@@ -161,29 +164,28 @@ def surfaceRibbonsCtrl(jointNum, ctrlNum, name):
         #del useless nodes
         cmds.delete(DecMatX)
         cmds.delete(LOC)
-        #cmds.delete(Mat_4x4)
-        #prout=cmds.select('Mat_RIB_*')
-        #print(prout)
         
     div_grp_sel=cmds.select('GRP_C_'+name+'*')
     Grp_offset=cmds.group(n='GRP_Master_'+name)
     
     
     #select joint and skin
-    print(jntList) 
     cmds.select(jntList)
     cmds.select(sel, add=True)
     SkC=cmds.skinCluster(bindMethod=0, normalizeWeights=1, weightDistribution=0, mi=3, omi=True, dr=4, rui=True, nw=1, n='SkC_'+name)[0]
+
+    return jntList, grpList
 
 
 def createRibbon(crv1, crv2, name, jntNum, ctlNum):
     
     createSurface(name, crv1, crv2)
-    surfaceRibbonsJoint(jntNum, ctlNum, name)
-    surfaceRibbonsCtrl(jntNum, ctlNum, name)
+    jnts = surfaceRibbonsJoint(jntNum, ctlNum, name)
+    grps = surfaceRibbonsCtrl(jntNum, ctlNum, name)
     
     #del unused crv
     cmds.select(crv1)
     cmds.select(crv2,add=True)
     cmds.delete()
     
+    return jnts, grps
