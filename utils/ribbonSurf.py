@@ -5,8 +5,8 @@ import RigLo.basic as bs
 
 
 def createSurface(name, crv1, crv2):
-    cmds.select('CRV_first_'+name)
-    cmds.select('CRV_second_'+name,add=True)
+    cmds.select(crv1)
+    cmds.select(crv2,add=True)
     Surface=cmds.loft(n='SURF_'+name)[0]
     cmds.FreezeTransformations()
     cmds.DeleteHistory()
@@ -14,25 +14,19 @@ def createSurface(name, crv1, crv2):
 
 #make work without the UI
 
-def surfaceRibbonsJoint(jointNum, ctrlNum ):
+def surfaceRibbonsJoint(jointNum, ctrlNum, name):
     
     skList=[]
-    jointNum = int(cmds.textField("jntNumb", query=True, text=True))
-    rebuildNum = int(cmds.textField("ctrlNumb", query=True, text=True))
     #rebuildSurface with the number of controller
-    cmds.rebuildSurface(su=1,sv=rebuildNum,du=1,dv=3,kr=0)
+    cmds.rebuildSurface(su=1,sv=ctrlNum,du=1,dv=3,kr=0)
         
-    name = cmds.textField("RibbonName", query=True, text=True)
-    nb_jnts = int(cmds.textField("jntNumb", query=True, text=True))
     sel='SURF_'+name
     shape=cmds.listRelatives(sel,s=True)
 
-    cmds.select(MastJoint)
-    MastJoint=cmds.joint(n='JNT_Master_'+name)
-    
-    for div in range(nb_jnts+1):
+       
+    for div in range(jointNum+1):
         U=0.5
-        V=div/nb_jnts
+        V=div/jointNum
         
         #build point on surface
         P_on_S=cmds.createNode('pointOnSurfaceInfo',n='PoS_'+sel[0]+'_0'+str(div))
@@ -95,25 +89,23 @@ def surfaceRibbonsJoint(jointNum, ctrlNum ):
         cmds.connectAttr(decMatxJnt+'.outputTranslate',jnt+'.translate')
         cmds.setAttr(jnt+'.inheritsTransform',0)
 
+        if not jnt == 'SK_'+name+'_00':
+            cmds.parent(jnt, jointOld)
         jointOld = jnt
     
     div_grp_sel=cmds.select('GRP_'+name+'*')
     Grp_offset=cmds.group(n='GRP_offset_'+name)
     
-    cmds.parent(skList,MastJoint)
     
-def surfaceRibbonsCtrl(*args):
+def surfaceRibbonsCtrl(jointNum, ctrlNum, name):
     
     jntList=[]
-    ctrlNumber = int(cmds.textField("ctrlNumb", query=True, text=True))
-    name = cmds.textField("RibbonName", query=True, text=True)
-    nb_jnts = int(cmds.textField("jntNumb", query=True, text=True))
     sel='SURF_'+name
     shape=cmds.listRelatives(sel,s=True)
     
-    for div in range(ctrlNumber+1):
+    for div in range(ctrlNum+1):
         U=0.5
-        V=div/ctrlNumber
+        V=div/ctrlNum
         
         #build point on surface
         P_on_S=cmds.createNode('pointOnSurfaceInfo',n='PoS_RIB_'+name+'_0'+str(div))
@@ -182,53 +174,16 @@ def surfaceRibbonsCtrl(*args):
     cmds.select(jntList)
     cmds.select(sel, add=True)
     SkC=cmds.skinCluster(bindMethod=0, normalizeWeights=1, weightDistribution=0, mi=3, omi=True, dr=4, rui=True, nw=1, n='SkC_'+name)[0]
-    
-
 
 
 def createRibbon(crv1, crv2, name, jntNum, ctlNum):
     
-    createSurface()
-    surfaceRibbonsJoint()
-    surfaceRibbonsCtrl()
+    createSurface(name, crv1, crv2)
+    surfaceRibbonsJoint(jntNum, ctlNum, name)
+    surfaceRibbonsCtrl(jntNum, ctlNum, name)
     
     #del unused crv
     cmds.select(crv1)
     cmds.select(crv2,add=True)
     cmds.delete()
     
-
-def create_ui():
-    windowRibbon = "RibbonWindow"
-    if cmds.window(windowRibbon, exists=True):
-        cmds.deleteUI(windowRibbon)
-    cmds.window(windowRibbon, t="Create Two types Ribbons")
-    
-    cmds.columnLayout(columnAttach=('both', 10), rowSpacing=10, columnWidth=250, adjustableColumn=True)
-    cmds.text(label='  ',al='center')
-    cmds.text(label='Select continuous/partial edge loop, and a ribbon of it.',al='left', ann='Tip : set to max of controllers to half the number of joints or low.')
-    cmds.text(label='  ',al='center')
-    cmds.text(label='Name',al='center')
-    name = cmds.textField("RibbonName")
-    
-    cmds.text(label='Create curve',al='center')
-    cmds.rowColumnLayout(numberOfColumns=2, columnWidth=[(1, 150), (2, 150)],adj=2,columnOffset=[(2, "left", 3)])
-    #cmds.rowColumnLayout(numberOfColumns=2, columnWidth=[(1, 150), (2, 159)], columnOffset=[(1, "right", 3)], rowSpacing=(1, 7))
-    cmds.button(label='Curve 1', c=createFrstCrv, backgroundColor=(0.2, 0.3, 0.2))
-    cmds.button(label='Curve 2', c=createScndCrv, backgroundColor=(0.3, 0.5, 0.3))
-    cmds.setParent("..")
-
-    cmds.columnLayout(columnAttach=('both', 10), rowSpacing=10, columnWidth=250,adj=True)
-    cmds.separator( h=5)
-    cmds.text(label='Number of joints')
-    jointNum = cmds.textField("jntNumb")
-    
-    cmds.text(label='Number of controllers')
-    jointNum = cmds.textField("ctrlNumb")
-    UVdir=cmds.checkBox(label='Inverse U and V directions',)
-    cmds.button(label="Create", command=createRibbon)
-    cmds.button(label='Close', command=('cmds.deleteUI(\"' + windowRibbon + '\", window=True)'))
-    cmds.text(label='  ',al='center')
-    cmds.showWindow(windowRibbon)
-    
-create_ui()

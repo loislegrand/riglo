@@ -3,9 +3,11 @@ import maya.cmds as cmds
 import RigLo.components.shapes as shapes
 import RigLo.basic as bs
 import RigLo.components.nodes as nd
+import RigLo.utils.ribbonSurf as rib
 from importlib import reload
 
 reload(bs)
+reload(rib)
 
 """
 verify the orientation 
@@ -108,10 +110,30 @@ def createIkRpChain(objs = []):
         print(l, n)
         cmds.addAttr(switchCtl, ln = l, nn=n, proxy=ctlAttr[0] + '.' + l )
 
-    crv1 = bs.lineBtw(objs[0], objs[1], selectable=True)
-    crv2 = bs.lineBtw(objs[1], objs[2], selectable=True)
+    crv1tmp = bs.lineBtw(objs[0], objs[1], selectable=True)
+    crv2tmp = bs.lineBtw(objs[1], objs[2], selectable=True)
 
-    cmds.delete(cmds.listConnections(cmds.listRelatives(crv1, s=True)[1]), cmds.listConnections(cmds.listRelatives(crv2, s=True)[1]))
+    crvUp1 = cmds.duplicate(crv1tmp, n='CRV_up1'+name)[0]
+    crvUp2 = cmds.duplicate(crv1tmp, n='CRV_up2'+name)[0]
+    crvDwn1 = cmds.duplicate(crv2tmp, n='CRV_low1'+name)[0]
+    crvDwn2 = cmds.duplicate(crv2tmp, n='CRV_low2'+name)[0]
+    ribbonCrvTmp = [crvUp1, crvUp2, crvDwn1, crvDwn2]
+
+    cmds.delete(crv1tmp, crv2tmp)
+
+    for crv in ribbonCrvTmp:
+        cmds.parent(crv, objs[0])
+        cmds.xform(crv, cpc=True) 
+        cmds.move(0, 1, 0, r=True, ls=True, wd=True)
+
+    cmds.select(crvUp2, crvDwn2)
+    cmds.move(0, -2, 0, r=True, ls=True, wd=True)
+
+    cmds.parent(ribbonCrvTmp, w=True)
+
+
+    rib.createRibbon(crvUp1, crvUp2, name='ribUp'+name, jntNum=4, ctlNum=2)
+    rib.createRibbon(crvDwn1, crvDwn2, name='ribDwn'+name, jntNum=4, ctlNum=2)
 
     """
     cmds.delete(cmds.listConnections(cmds.listRelatives(crv2, s=True)))"""
