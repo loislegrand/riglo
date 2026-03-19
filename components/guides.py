@@ -119,12 +119,11 @@ class GuideLoader():
         guideArm = cmds.joint(n='GD_shoulder_{}_Left'.format(allInfos[1]))
         guideForearm = cmds.joint(n='GD_elbow_{}_Left'.format(allInfos[1]))
         guideHand = cmds.joint(n='GD_wrist_{}_Left'.format(allInfos[1]))
+        guideHandEnd = cmds.joint(n='GD_hand_{}_Left'.format(allInfos[1]), p= (5,0,0),r=True)
 
         cmds.xform(guideArm, t=(20, 165, 0), ro=(0,0,-45))
         cmds.xform(guideForearm, t=(25, 0, -2))
         cmds.xform(guideHand, t=(25, 0, 2))
-
-        bs.BRA_rotatePlane(guideArm, guideForearm, guideHand)
 
         self.joint_list.append(guideArm)
         self.joint_list.append(guideForearm)
@@ -133,11 +132,14 @@ class GuideLoader():
         print(guideArm)
         if allInfos[2] == 'Right':
             print(guideArm)
-            bs.mirror(symmetry=True, jointChain = guideArm)
+            chain = bs.mirror(symmetry=True, jointChain = guideArm)[0]
+            self.joint_list = (cmds.listRelatives(chain, ad=True, typ='joint') + [chain])[::-1]
+        
+        bs.BRA_rotatePlane(self.joint_list[0], self.joint_list[1], self.joint_list[2])
         
         return self.joint_list
 
-       
+     #doesn't work well on the left side    
     def loadGuidesQuadLeg(self):
 
         TopGds = self.hierarchyGuides()

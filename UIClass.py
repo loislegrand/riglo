@@ -90,7 +90,7 @@ class UI():
                 align="right", width=310, wordWrap=True, height=40)
         
         if bs.MayaNodesVersion():
-            message = 'The autorig will use nodes from versions prior to 2026 (doubleLinear, pointMatrixMult, ...).'
+            message = 'The autorig will use nodes from versions prior to 2026 (unitConversion, doubleLinear, pointMatrixMult, ...).'
         else:
             message = 'The autorig will use nodes from 2026 versions.'
 

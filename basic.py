@@ -34,12 +34,29 @@ def parentCnst(masters, children, off=False, matx=False):
         cmds.error('You must have child node to constraint')
 
     if matx == False:
-        cstrnt = cmds.parentConstraint(masters, children, mo=off)
+        cstrnt = cmds.parentConstraint(masters, children, mo=off)[0]
 
     else:
         print('Idk how to do it yet, it s a WIP')
 
     return cstrnt
+
+def aimCnst(masters, children, pa='x', sa='y', off=False, matx=False):
+
+    if len(masters) == 0:
+        cmds.error('You must have parent nodes to constraint')
+
+    if children == '':
+        cmds.error('You must have child node to constraint')
+
+    if matx == False:
+        cstrnt = cmds.aimConstraint(masters, children, mo=off, aim=(1,0,0), u= (0,1,0), worldUpType="objectrotation",  worldUpVector= (0, 0, 1), worldUpObject= masters[-1:])[0]
+
+    else:
+        print('Idk how to do it yet, it s a WIP')
+
+    return cstrnt
+
 
 def lineBtw(parentOne, parentTwo, selectable=False):
     #from two string object names
@@ -106,7 +123,7 @@ def IkFkBlend(jntList=[]):
     cmds.matchTransform(locator[0], jntList[0])
     #Ajouter un attribut IKFK (0<x<1)
     cmds.addAttr(locator[0], ln="ParameterIkFk", nn="_____", at="enum", en="_____")
-    cmds.addAttr(locator[0], attributeType="float", longName="IkFk", minValue=0, maxValue=1, keyable=1)
+    cmds.addAttr(locator[0], attributeType="float", longName="IkFk", minValue=0, maxValue=1, keyable=1, dv=1)
     cmds.setAttr(locator[0]+".IkFk", keyable=1)
 
     #Créer le node reverse
@@ -123,8 +140,10 @@ def IkFkBlend(jntList=[]):
         cmds.setAttr(pConstraint[0]+".interpType", 2)
         #Connection locator.IKFK > contrainte.IK
         cmds.connectAttr((locator[0]+".IkFk"),(pConstraint[0]+".JNT_Ik_"+object+"W1"))
+        cmds.connectAttr((locator[0]+".IkFk"),"JNT_Ik_"+object+".visibility")
         #Connection reverse.outputX > contrainte.FK
         cmds.connectAttr((reverseNode+".outputX"),(pConstraint[0]+".C_Fk_"+object+"W0"))
+        cmds.connectAttr((reverseNode+".outputX"),"C_Fk_"+object+".visibility")
 
     #Parentages : "JNT_IK_" fils de locator GLOBAL / Locator GLOBAL fils de "RIGGING" 
     cmds.parent("JNT_Ik_"+jntList[0], locator[0])
@@ -132,7 +151,7 @@ def IkFkBlend(jntList=[]):
     #Selection du locator GLOBAL
     cmds.select(locator[0])
 
-    return locator
+    return [locator[0], reverseNode]
 
 
 def getUIsInfos(UiPart='', printInfos=False):
@@ -163,11 +182,12 @@ def getUIsInfos(UiPart='', printInfos=False):
 def mirror(symmetry=False, jointChain = ''):
     
     cmds.select(jointChain)
-    cmds.mirrorJoint(mirrorYZ=True, mirrorBehavior=True, searchReplace=( "_Left", "_Right"))
-    
+    mirrored = cmds.mirrorJoint(mirrorYZ=True, mirrorBehavior=True, searchReplace=( "_Left", "_Right"))
 
     if symmetry == True:
         cmds.delete(jointChain)
+    
+    return mirrored
 
 
 def jntOrient(lat='', jntList=[]):

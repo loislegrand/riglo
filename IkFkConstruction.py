@@ -39,8 +39,13 @@ def createIkRpChain(objs = []):
     bs.doRename(1, objs=newChainIk, prefix='JNT_Ik_',)
     newChainIk = bs.doRename(0, objs=newChainIk, search='1', replace='')
     newChainCtl = bs.controllers(jntList=objs, ctrlShape='stCircle', name='C_Fk_')
+    #cmds.parent(cmds.listRelatives(newChainCtl[1], p=True)[0], newChainCtl[0] )
+    #cmds.parent(cmds.listRelatives(newChainCtl[2], p=True)[0], newChainCtl[1] )
     
     ctlAttr = bs.IkFkBlend(objs)
+
+    topCtl = bs.controllers(jntList = [objs[0]] ,ctrlShape='crossArrow', name='C_top_')[0]
+    bs.doRename(0, objs=[cmds.listRelatives(topCtl, p=True)[0]], search='GRP_', replace='GRP_up_')[0]
 
     #change rotate order to xzy ou xyz 
     IkCtl = bs.controllers(jntList=[newChainIk[2]], ctrlShape='cube',name='C_')
@@ -50,16 +55,19 @@ def createIkRpChain(objs = []):
     #Create ctl for the Ik Handle, match wrist orient, parent it 
     ikH = cmds.ikHandle(sj=newChainIk[0], ee=newChainIk[2],sol='ikRPsolver' , n='IkH_')
     PV = bs.controllers(jntList = ['PV_Previz_GD_'+objs[1]] ,ctrlShape='diamond', name='C_PV_')[0]
+    PV = bs.doRename(0, objs=[PV, cmds.listRelatives(PV, p=True)[0]], search='Previz_GD_', replace='')[0]
     cmds.matchTransform(PV, objs[1], rot=True)
+    cmds.poleVectorConstraint(PV, ikH[0])
+    bs.lineBtw(PV, objs[1])
 
     bs.parentCnst([IkCtl[0]], ikH[0], off=False, matx=False)
 
     #On global locator, addAttr length Up & Low limb : mult dL into the translate
-    cmds.addAttr(ctlAttr, at="float", longName="stretch", min=0, max = 1, dv=1, keyable=1)
-    cmds.addAttr(ctlAttr, at="float", longName="upLimbLength", min=0.05, dv=1, keyable=1)
-    cmds.addAttr(ctlAttr, at="float", longName="lowLimbLength", min=0.05, dv=1, keyable=1)
-    cmds.addAttr(ctlAttr, at="float", longName="maxStretch", min=0.05, dv=10, keyable=1)
-    cmds.addAttr(ctlAttr, at="float",nn="Scale", longName="scaleGlobale", min=0.05, dv=1, keyable=1)
+    cmds.addAttr(ctlAttr[0], at="float", longName="stretch", min=0, max = 1, dv=1, keyable=1)
+    cmds.addAttr(ctlAttr[0], at="float", longName="upLimbLength", min=0.05, dv=1, keyable=1)
+    cmds.addAttr(ctlAttr[0], at="float", longName="lowLimbLength", min=0.05, dv=1, keyable=1)
+    cmds.addAttr(ctlAttr[0], at="float", longName="maxStretch", min=0.05, dv=10, keyable=1)
+    cmds.addAttr(ctlAttr[0], at="float",nn="Scale", longName="scaleGlobale", min=0.05, dv=1, keyable=1)
 
     distNode = cmds.createNode('distanceBetween', n='dist_'+name)
     cmds.connectAttr(ctlAttr[0] + '.worldMatrix', distNode + '.inMatrix1')
@@ -140,14 +148,36 @@ def createIkRpChain(objs = []):
     ribUp = rib.createRibbon(crvUp1, crvUp2, name='ribUp'+name, jntNum=4, ctlNum=2)
     ribDwn = rib.createRibbon(crvDwn1, crvDwn2, name='ribDwn'+name, jntNum=4, ctlNum=2)
 
-    print(ribUp)
+    #aimConstraint to the end ribCtl
+    cmds.pointConstraint(ribUp[1][-1], ribUp[1][-3], cmds.listRelatives(ribUp[1][-2], p=True)[0])
+    cmds.pointConstraint(ribDwn[1][-1], ribDwn[1][-3], cmds.listRelatives(ribDwn[1][-2], p=True)[0])
 
-    midCtl = bs.controllers(jntList = [objs[1]] ,ctrlShape='crossArrow', name='C_mid_')
+    midCtl = bs.controllers(jntList = [objs[1]] ,ctrlShape='crossArrow', name='C_mid_')[0]
+    bs.doRename(0, objs=[cmds.listRelatives(midCtl, p=True)[0]], search='GRP_', replace='GRP_mid_')[0]
 
     pvPtCstrnt = bs.parentCnst([objs[1], PV], cmds.listRelatives(midCtl, p=True)[0])
-    cmds.addAttr(pvPtCstrnt, ln='pvPin')
+    cmds.addAttr(midCtl, ln='pvPin', k=True, min=0, max=1)
     if cmds.objectType(pvPtCstrnt) == 'parentConstraint':
-        cmds.connectAttr()
+        cmds.connectAttr(midCtl +'.pvPin', ctlAttr[1] + '.inputY')
+        cmds.connectAttr(ctlAttr[1] + '.outputY', pvPtCstrnt+'.'+objs[1]+"W0")
+        cmds.connectAttr(midCtl+".pvPin", pvPtCstrnt+'.'+PV+"W1")
+    else:
+        cmds.error('Stop being lazy et make the matrix version, 1 day top')
+
+    
+    bs.parentCnst([objs[0]], cmds.listRelatives(ribUp[1][-3], p=True)[0],off=True)
+    bs.parentCnst([topCtl], ctlAttr[0],off=True)
+    bs.parentCnst([midCtl], cmds.listRelatives(ribUp[1][-1], p=True)[0],off=True)
+    bs.parentCnst([midCtl], cmds.listRelatives(ribDwn[1][-3], p=True)[0],off=True)
+    bs.parentCnst([objs[2]], cmds.listRelatives(ribDwn[1][-1], p=True)[0],off=True)
+
+
+
+
+
+
+
+    cmds.delete('*Previz_GD_'+objs[1])
 
 
     #merge elbow controller with a roundness parameter : blend rotation of te two ribbons ends, and had pin parameter
