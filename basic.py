@@ -33,11 +33,44 @@ def parentCnst(masters, children, off=False, matx=False):
     if children == '':
         cmds.error('You must have child node to constraint')
 
-    if matx == False:
+    if not matx:
         cstrnt = cmds.parentConstraint(masters, children, mo=off)[0]
 
     else:
-        print('Idk how to do it yet, it s a WIP')
+        if not len(masters) == 1:
+            cmds.error("It s a WIP !!! It does not work with multiple parent yet")
+        slave = children
+        slaveParent = cmds.listRelatives(slave, parent=1)
+        # Créer un node temporaire de multMatrix
+        mMatrixTemp = cmds.createNode("multMatrix")
+        
+        # Connections dans le multMatrix temporaire = WM Slave * WIM Master
+        cmds.connectAttr(slave+".worldMatrix[0]", mMatrixTemp+".matrixIn[0]")
+        cmds.connectAttr(masters[0]+".worldInverseMatrix[0]", mMatrixTemp+".matrixIn[1]")
+        
+        # Obtenir les valeur du multMatrix temporaire / supprimer le node multMatrix temporaire 
+        offsetMatrix = cmds.getAttr(mMatrixTemp+".matrixSum")
+        cmds.delete(mMatrixTemp)
+        
+        # Créer un node de contrainte de multMatrix
+        mMatrixConstraint = cmds.createNode("multMatrix")
+        
+        # Paramétrer l'offset trouvé dans le multMatrix de contrainte (type="matrix") : matrixIn[0]
+        cmds.setAttr(mMatrixConstraint+".matrixIn[0]", offsetMatrix, type="matrix")
+        
+        # Connections entrantes : WM Master dans matrixIn[1] / WIM Parent Slave dans matrixIn[2]
+        cmds.connectAttr(masters[0]+".worldMatrix[0]", mMatrixConstraint+".matrixIn[1]")
+        if slaveParent :
+            cmds.connectAttr(slaveParent[0]+".worldInverseMatrix[0]", mMatrixConstraint+".matrixIn[2]")
+        
+        # Connections sortante : matrixSum dans offsetParentMatrix du Slave
+        cmds.connectAttr(mMatrixConstraint+".matrixSum", slave+".offsetParentMatrix", force=1)
+        
+        # Coordonnées neutres sur le Slave
+        cmds.setAttr(slave+".translate", 0,0,0)
+        cmds.setAttr(slave+".rotate", 0,0,0)
+        cmds.setAttr(slave+".scale", 1,1,1)
+        cstrnt = mMatrixConstraint
 
     return cstrnt
 
@@ -291,18 +324,21 @@ def duplicate(objList = []):
         objList = cmds.ls(selection=True, long=True) or []
 
     dupChain = []
-    prnt = cmds.spaceLocator(n='LOC_' + objList[0])
+    prnt = cmds.spaceLocator(n='LOC_' + objList[0])[0]
+    LOC = prnt
     for obj in objList:
         cmds.select(obj)
         duplicata = cmds.duplicate(po=True)[0]
         dupChain.append(duplicata)
         cmds.parent(duplicata, prnt)
         prnt = duplicata
-        
+    cmds.parent(cmds.listRelatives(LOC, c=True, typ='transform')[0], w=True)
+    cmds.delete(LOC)
+
     return dupChain
 
 
-def BRA_rotatePlane(pointA, pointB, pointC) :
+def BRA_rotatePlane(pointA, pointB, pointC, name) :
     
     # Si le groupe "PREVIZ" n'existe pas, le créer
     totalPreviz = "PREVIZ"  
@@ -310,11 +346,11 @@ def BRA_rotatePlane(pointA, pointB, pointC) :
         totalPreviz = cmds.group(name= totalPreviz, empty=1)
     
     # Création du locator de previz et de son groupe de placement
-    locPreviz = cmds.spaceLocator(name="PV_Previz_"+pointB)
-    grpPreviz = cmds.group(locPreviz[0], name="GRP_Previz_"+pointB)
+    locPreviz = cmds.spaceLocator(name="PV_Previz_"+name)
+    grpPreviz = cmds.group(locPreviz[0], name="GRP_Previz_"+name)
 
     # Création du plan de previz
-    planePreviz = cmds.polyCreateFacet(p=[(0, 0, 0), (0, 0, 0), (0, 0, 0)], constructionHistory=0, name="RP_Previz_"+pointB)
+    planePreviz = cmds.polyCreateFacet(p=[(0, 0, 0), (0, 0, 0), (0, 0, 0)], constructionHistory=0, name="RP_Previz_"+name)
     planeShape = cmds.listRelatives(planePreviz[0], shapes=1)
     cmds.setAttr(planeShape[0]+".overrideEnabled", 1)
     cmds.setAttr(planeShape[0]+".overrideColor", 14)

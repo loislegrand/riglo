@@ -21,7 +21,9 @@ add a volume parameter
 """
 
 def createIkRpChain(objs = []):
+    #if there is a base hierarchy no ned to create a new one
     
+    #_____ BUILD PART _____
     if len(objs) == 0:
         objs = cmds.ls(selection=True)
 
@@ -39,8 +41,8 @@ def createIkRpChain(objs = []):
     bs.doRename(1, objs=newChainIk, prefix='JNT_Ik_',)
     newChainIk = bs.doRename(0, objs=newChainIk, search='1', replace='')
     newChainCtl = bs.controllers(jntList=objs, ctrlShape='stCircle', name='C_Fk_')
-    #cmds.parent(cmds.listRelatives(newChainCtl[1], p=True)[0], newChainCtl[0] )
-    #cmds.parent(cmds.listRelatives(newChainCtl[2], p=True)[0], newChainCtl[1] )
+    cmds.parent(cmds.listRelatives(newChainCtl[1], p=True)[0], newChainCtl[0] )
+    cmds.parent(cmds.listRelatives(newChainCtl[2], p=True)[0], newChainCtl[1] )
     
     ctlAttr = bs.IkFkBlend(objs)
 
@@ -51,14 +53,16 @@ def createIkRpChain(objs = []):
     IkCtl = bs.controllers(jntList=[newChainIk[2]], ctrlShape='cube',name='C_')
 
     switchCtl = bs.controllers(jntList='', ctrlShape='cross', name='IkSwitch_')
+    cmds.move(0, 0, -5, cmds.listRelatives(switchCtl, p=True)[0], r=True, ls=True, wd=True)
+
 
     #Create ctl for the Ik Handle, match wrist orient, parent it 
     ikH = cmds.ikHandle(sj=newChainIk[0], ee=newChainIk[2],sol='ikRPsolver' , n='IkH_')
-    PV = bs.controllers(jntList = ['PV_Previz_GD_'+objs[1]] ,ctrlShape='diamond', name='C_PV_')[0]
-    PV = bs.doRename(0, objs=[PV, cmds.listRelatives(PV, p=True)[0]], search='Previz_GD_', replace='')[0]
+    PV = bs.controllers(jntList = ['PV_Previz'+name] ,ctrlShape='diamond', name='C_PV_')[0]
+    PV = bs.doRename(0, objs=[PV, cmds.listRelatives(PV, p=True)[0]], search='Previz_', replace='')[0]
     cmds.matchTransform(PV, objs[1], rot=True)
     cmds.poleVectorConstraint(PV, ikH[0])
-    bs.lineBtw(PV, objs[1])
+    linePV = bs.lineBtw(PV, objs[1])
 
     bs.parentCnst([IkCtl[0]], ikH[0], off=False, matx=False)
 
@@ -68,6 +72,8 @@ def createIkRpChain(objs = []):
     cmds.addAttr(ctlAttr[0], at="float", longName="lowLimbLength", min=0.05, dv=1, keyable=1)
     cmds.addAttr(ctlAttr[0], at="float", longName="maxStretch", min=0.05, dv=10, keyable=1)
     cmds.addAttr(ctlAttr[0], at="float",nn="Scale", longName="scaleGlobale", min=0.05, dv=1, keyable=1)
+    cmds.addAttr(ctlAttr[0], at="float", longName="bendies", min=0, max=1, dv=0, keyable=1)
+    cmds.addAttr(ctlAttr[0], at="float", longName="subBendies", min=0, max=1, dv=0, keyable=1)
 
     distNode = cmds.createNode('distanceBetween', n='dist_'+name)
     cmds.connectAttr(ctlAttr[0] + '.worldMatrix', distNode + '.inMatrix1')
@@ -77,7 +83,7 @@ def createIkRpChain(objs = []):
     
     distMult = nd.multDL(name) #needs to be connected to the global scale parameter
     cmds.setAttr(distMult+'.input1',1)
-    cmds.setAttr(distMult+'.input2', cmds.getAttr(distNode +'.distance'))
+    cmds.setAttr(distMult+'.input2', cmds.getAttr(objs[1] +'.translateX')+cmds.getAttr(objs[2] +'.translateX'))
 
     lerpStretch = cmds.createNode('lerp', n='lerp'+name)
     cmds.connectAttr(distRatio + '.output', lerpStretch + '.input2')
@@ -147,13 +153,17 @@ def createIkRpChain(objs = []):
 
     ribUp = rib.createRibbon(crvUp1, crvUp2, name='ribUp'+name, jntNum=4, ctlNum=2)
     ribDwn = rib.createRibbon(crvDwn1, crvDwn2, name='ribDwn'+name, jntNum=4, ctlNum=2)
+    cmds.parent(ribUp[0][0], objs[0])
+    cmds.parent(ribDwn[0][0], objs[1])
 
     #aimConstraint to the end ribCtl
     cmds.pointConstraint(ribUp[1][-1], ribUp[1][-3], cmds.listRelatives(ribUp[1][-2], p=True)[0])
     cmds.pointConstraint(ribDwn[1][-1], ribDwn[1][-3], cmds.listRelatives(ribDwn[1][-2], p=True)[0])
+    cmds.aimConstraint(ribUp[1][-1], cmds.listRelatives(ribUp[1][-2], p=True)[0], mo=False, aim=(0,0,1), u= (1,0,0), worldUpType="objectrotation",  worldUpVector= (1, 0, 0), worldUpObject= ribUp[1][-1])
+    cmds.aimConstraint(ribDwn[1][-1], cmds.listRelatives(ribDwn[1][-2], p=True)[0], mo=False, aim=(0,0,1), u= (1,0,0), worldUpType="objectrotation",  worldUpVector= (1, 0, 0), worldUpObject= ribDwn[1][-1])
 
     midCtl = bs.controllers(jntList = [objs[1]] ,ctrlShape='crossArrow', name='C_mid_')[0]
-    bs.doRename(0, objs=[cmds.listRelatives(midCtl, p=True)[0]], search='GRP_', replace='GRP_mid_')[0]
+    bs.doRename(0, objs=['|'+cmds.listRelatives(midCtl, p=True)[0]], search='GRP_', replace='GRP_mid_')[0]
 
     pvPtCstrnt = bs.parentCnst([objs[1], PV], cmds.listRelatives(midCtl, p=True)[0])
     cmds.addAttr(midCtl, ln='pvPin', k=True, min=0, max=1)
@@ -171,14 +181,36 @@ def createIkRpChain(objs = []):
     bs.parentCnst([midCtl], cmds.listRelatives(ribDwn[1][-3], p=True)[0],off=True)
     bs.parentCnst([objs[2]], cmds.listRelatives(ribDwn[1][-1], p=True)[0],off=True)
 
+    subBendies = cmds.listRelatives(ribUp[0][-1], p=True)[0], cmds.listRelatives(ribDwn[0][-1], p=True)[0]
+    bendies = cmds.listRelatives(cmds.listRelatives(ribUp[1][-1], p=True)[0], p=True)[0], cmds.listRelatives(cmds.listRelatives(ribDwn[1][-1], p=True)[0], p=True)[0]
 
+    for i in subBendies:
+        cmds.connectAttr(ctlAttr[0]+'.subBendies', i + '.visibility')
+    for i in bendies:
+        cmds.connectAttr(ctlAttr[0]+'.bendies', i + '.visibility')
 
+    bs.parentCnst([objs[2]], switchCtl[0], off=True, matx=True)
 
-
-
-
-    cmds.delete('*Previz_GD_'+objs[1])
-
-
-    #merge elbow controller with a roundness parameter : blend rotation of te two ribbons ends, and had pin parameter
     #if GDs Biped leg =>  ajouter les param de inverse foot
+
+    #_____ TIDY UP PART _____
+    oldGD = cmds.listRelatives(objs[0], p=True)
+    cmds.parent(objs[0], 'SKINNING')
+    groupIkRig = cmds.group(ribUp[1][:3], ribDwn[1][:3], ctlAttr[0], ikH[0], n='GRP_IkRig'+name)
+    cmds.parent(groupIkRig, 'RIGGING')
+    cmds.parent(cmds.ls('SURF_*', typ='transform'), linePV, 'NO_TRANSFORM')
+    groupIkCtl = cmds.group(cmds.listRelatives(ribUp[0][-1], p=True), cmds.listRelatives(ribDwn[0][-1], p=True),
+                         cmds.listRelatives(cmds.listRelatives(ribUp[1][-1], p=True)[0], p=True)[0],
+                         cmds.listRelatives(cmds.listRelatives(ribDwn[1][-1], p=True)[0], p=True)[0],
+                         cmds.listRelatives(IkCtl, p=True), cmds.listRelatives(PV, p=True),
+                         cmds.listRelatives(midCtl, p=True), cmds.listRelatives(topCtl, p=True),
+                          n='GRP_IkCtl'+name)
+    cmds.parent(cmds.listRelatives(switchCtl, p=True), cmds.listRelatives(newChainCtl[0], p=True), groupIkCtl, 'CONTROLERS')
+
+    cmds.delete('*Previz'+name)
+    cmds.delete(oldGD)
+
+    #FkCtl into the group 
+
+
+    #_____ RENAMING PART _____

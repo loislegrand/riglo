@@ -70,7 +70,11 @@ def surfaceRibbonsJoint(jointNum, ctrlNum, name):
         #cmds.connectAttr(Mat_4x4+'.output',groupe+'.offsetParentMatrix')
         
         DecMatX=cmds.createNode('decomposeMatrix', n='DeMatX_'+sel[0]+'_0'+str(div))
-        cmds.connectAttr(Mat_4x4+'.output', DecMatX+'.inputMatrix')
+        MultMatGrp = cmds.createNode('multMatrix', n='MultGrp_'+sel[0]+'_0'+str(div))
+        cmds.connectAttr(Mat_4x4+'.output', MultMatGrp+'.matrixIn[0]')
+        cmds.connectAttr(groupe + '.parentInverseMatrix', MultMatGrp+'.matrixIn[1]')
+        cmds.connectAttr(MultMatGrp+'.matrixSum', DecMatX+'.inputMatrix')
+
         
         #connect outputs T,R,S to grp
         cmds.connectAttr(DecMatX+'.outputTranslate', groupe+'.translate')
@@ -93,8 +97,9 @@ def surfaceRibbonsJoint(jointNum, ctrlNum, name):
             cmds.parent(jnt, jointOld)
         jointOld = jnt
     
-    div_grp_sel=cmds.select('GRP_'+name+'*')
-    Grp_offset=cmds.group(n='GRP_offset_'+name)
+    div_grp_sel=cmds.ls('GRP_'+name+'*')
+    Grp_offset=cmds.group(div_grp_sel, n='GRP_offset_'+name)
+    skList += div_grp_sel
 
     return skList
     

@@ -129,17 +129,14 @@ class GuideLoader():
         self.joint_list.append(guideForearm)
         self.joint_list.append(guideHand)
 
-        print(guideArm)
         if allInfos[2] == 'Right':
-            print(guideArm)
             chain = bs.mirror(symmetry=True, jointChain = guideArm)[0]
             self.joint_list = (cmds.listRelatives(chain, ad=True, typ='joint') + [chain])[::-1]
         
-        bs.BRA_rotatePlane(self.joint_list[0], self.joint_list[1], self.joint_list[2])
+        bs.BRA_rotatePlane(self.joint_list[0], self.joint_list[1], self.joint_list[2], '_'.join(allInfos[:3]))
         
         return self.joint_list
 
-     #doesn't work well on the left side    
     def loadGuidesQuadLeg(self):
 
         TopGds = self.hierarchyGuides()
@@ -158,12 +155,10 @@ class GuideLoader():
         guideHandEnd = cmds.joint(p=(9, 8, 58), n='GD_finger_{}_Left'.format(allInfos[1]))
         guideEnd = cmds.joint(p=(9, 0, 60), n='GD_fingerEnd_{}_Left'.format(allInfos[1]))
         
-        bs.BRA_rotatePlane(guideArm, guideForearm, guideHand)
-
-        OutNode = cmds.spaceLocator(n='LOC_Out_'+allInfos[1])[0]
-        InNode = cmds.spaceLocator(n='LOC_In_'+allInfos[1])[0]
-        ToeRoll = cmds.spaceLocator(n='LOC_ToeRoll_'+allInfos[1])[0]
-        HeelRoll = cmds.spaceLocator(n='LOC_HeelRoll_'+allInfos[1])[0]
+        OutNode = cmds.spaceLocator(n='LOC_Out_{}_Left'.format(allInfos[1]))[0]
+        InNode = cmds.spaceLocator(n='LOC_In_{}_Left'.format(allInfos[1]))[0]
+        ToeRoll = cmds.spaceLocator(n='LOC_ToeRoll_{}_Left'.format(allInfos[1]))[0]
+        HeelRoll = cmds.spaceLocator(n='LOC_HeelRoll_{}_Left'.format(allInfos[1]))[0]
         cmds.parent(OutNode, InNode, ToeRoll, HeelRoll, guideEnd)
 
         if allInfos[2] == 'Left':
@@ -188,12 +183,11 @@ class GuideLoader():
         self.joint_list.append(HeelRoll)
         
         if allInfos[2] == 'Right':
-            print(guideArm)
-            bs.mirror(symmetry=True, jointChain = guideArm)
-        
-        return self.joint_list
+            chain = bs.mirror(symmetry=True, jointChain = guideArm)[0]
+            self.joint_list = (cmds.listRelatives(chain, ad=True, typ='joint') + [chain])[::-1]
 
-        #select a top bones 
+        bs.BRA_rotatePlane(self.joint_list[0], self.joint_list[1], self.joint_list[2], '_'.join(allInfos[:3]))
+
         return self.joint_list
     
     def loadGuidesBiLeg(self):
@@ -207,17 +201,17 @@ class GuideLoader():
         guideToes = cmds.joint(p=(9, 3, 12), n='GD_toes_{}_Left'.format(allInfos[1]))
         guideToesEnd = cmds.joint(p=(9, 3, 20), n='GD_toesEnd_{}_Left'.format(allInfos[1]))
 
-        bs.BRA_rotatePlane(guideUpLeg, guideLowLeg, guideFoot)
-
         self.joint_list.append(guideUpLeg)
         self.joint_list.append(guideLowLeg)
         self.joint_list.append(guideFoot)
         self.joint_list.append(guideToes)
 
         if allInfos[2] == 'Right':
-            print(guideUpLeg)
-            bs.mirror(symmetry=True, jointChain = guideUpLeg)
-        
+            chain = bs.mirror(symmetry=True, jointChain = guideUpLeg)[0]
+            self.joint_list = (cmds.listRelatives(chain, ad=True, typ='joint') + [chain])[::-1]
+
+        bs.BRA_rotatePlane(self.joint_list[0], self.joint_list[1], self.joint_list[2], '_'.join(allInfos[:3]))
+
         return self.joint_list
 
     def searchConstruct(self):
