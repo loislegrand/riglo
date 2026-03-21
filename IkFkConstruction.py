@@ -5,6 +5,7 @@ import RigLo.basic as bs
 import RigLo.components.nodes as nd
 import RigLo.utils.ribbonSurf as rib
 from importlib import reload
+from baseHierarchy import hierarchy
 
 reload(bs)
 reload(rib)
@@ -19,9 +20,47 @@ add a per limbPart length parameter
 add a volume parameter
 
 """
+def LimbDetection():
+    
+    # Sur le squelette, lire les labels
+    childList = cmds.listRelatives("SKINNING", allDescendents=1, type="joint")
+    for child in childList :
+        labelTypeStart = cmds.getAttr(child+".otherType")
+        
+        space = ""
+        
+        if (cmds.getAttr(child+".side")) == 1 :
+            space = "left"
+                        
+        elif (cmds.getAttr(child+".side")) == 2 :
+            space = "right"
+        
+        elif cmds.getAttr(child+'.side') == 0:
+            space = "center"
+            
+        else:
+            space = "none"
+    
+        # Si un label "arm" est trouvé (...)
+        if labelTypeStart == "arm":
+            armBase = child
+            print("---> Arm joint found : "+armBase+" <---")
+            
+            # (...) Chercher le label "hand" associé
+            grandChildList = cmds.listRelatives(armBase, allDescendents=1, type="joint")
+            for grandChild in grandChildList :
+                if (cmds.getAttr(grandChild+".otherType")) == "hand":
+                    handBase = grandChild                
+                    print("---> Hand joint found for "+armBase+" : "+handBase+" <---")
+                    
+                    forearmBase = cmds.listRelatives(handBase, parent=1)
+                    print("---> Forearm joint found for "+armBase+" : "+forearmBase[0]+" <---")
 
-def createIkRpChain(objs = []):
+
+def createIkRpChain(biLeg, objs = []):
     #if there is a base hierarchy no ned to create a new one
+    if not cmds.objExists('SKINNING'):
+        hierarchy('NEWNAME')
     
     #_____ BUILD PART _____
     if len(objs) == 0:
@@ -33,7 +72,7 @@ def createIkRpChain(objs = []):
     for n in names[1:]:
         name += '_' + n 
 
-    bs.jntOrient(lat='', jntList=objs)
+    bs.cJO_orientSel('X', 'Y', True, False, doAuto=False)
     objs = bs.doRename(0, objs=objs, search='GD_', replace='')
 
     newChainIk = bs.duplicate(objList=objs)
@@ -57,7 +96,7 @@ def createIkRpChain(objs = []):
 
 
     #Create ctl for the Ik Handle, match wrist orient, parent it 
-    ikH = cmds.ikHandle(sj=newChainIk[0], ee=newChainIk[2],sol='ikRPsolver' , n='IkH_')
+    ikH = cmds.ikHandle(sj=newChainIk[0], ee=newChainIk[2],sol='ikRPsolver' , n='IkH'+name)
     PV = bs.controllers(jntList = ['PV_Previz'+name] ,ctrlShape='diamond', name='C_PV_')[0]
     PV = bs.doRename(0, objs=[PV, cmds.listRelatives(PV, p=True)[0]], search='Previz_', replace='')[0]
     cmds.matchTransform(PV, objs[1], rot=True)
@@ -121,6 +160,26 @@ def createIkRpChain(objs = []):
     cmds.connectAttr(ctlAttr[0]+'.scaleGlobale', globalStretch + '.input1')
     cmds.connectAttr(ctlAttr[0]+'.upLimbLength', midMult+'.input2')
     cmds.connectAttr(ctlAttr[0]+'.lowLimbLength', lowMult+'.input2')
+
+    if biLeg:
+
+        cmds.addAttr(IkCtl[0], ln="InverseFoot", nn="_____", at="enum", en="_____", k=True)
+        cmds.addAttr(IkCtl[0], ln='FootBank',at='float',dv=0,k=True)
+        cmds.addAttr(IkCtl[0], ln='FootRoll',at='float',dv=0,k=True)
+        cmds.addAttr(IkCtl[0], ln='BallTwist',at='float',dv=0,k=True)
+        cmds.addAttr(IkCtl[0], ln='FootTwist',at='float',dv=0,k=True)
+        cmds.addAttr(IkCtl[0], ln='ToeRoll',at='float',dv=0,k=True)
+        cmds.addAttr(IkCtl[0], ln='ToeTwist',at='float',dv=0,k=True)
+        
+        #connect attr
+        """cmds.connectAttr(ctrl+'.FootBank','RF_int'+'_'+side+'.rotateZ')
+        cmds.connectAttr(ctrl+'.FootBank','RF_ext'+'_'+side+'.rotateZ')
+        cmds.connectAttr(ctrl+'.FootRoll','RF_heel'+'_'+side+'.rotateX')
+        cmds.connectAttr(ctrl+'.FootRoll','RF_toes'+'_'+side+'.rotateX')
+        cmds.connectAttr(ctrl+'.ToeRoll','RF_toesEnd'+'_'+side+'.rotateX')
+        cmds.connectAttr(ctrl+'.ToeTwist','RF_toesEnd'+'_'+side+'.rotateY')
+        cmds.connectAttr(ctrl+'.FootTwist','RF_toes'+'_'+side+'.rotateY')
+        cmds.connectAttr(ctrl+'.BallTwist','RF_heel'+'_'+side+'.rotateY')"""
 
     for l, n in bs.listExtraAttr(ctlAttr[0]).items():
         print(l, n)
@@ -192,6 +251,7 @@ def createIkRpChain(objs = []):
     bs.parentCnst([objs[2]], switchCtl[0], off=True, matx=True)
 
     #if GDs Biped leg =>  ajouter les param de inverse foot
+    
 
     #_____ TIDY UP PART _____
     oldGD = cmds.listRelatives(objs[0], p=True)

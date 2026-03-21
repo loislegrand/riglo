@@ -9,6 +9,7 @@ Offest parent
 import maya.cmds as cmds
 import RigLo.components.shapes as shapes
 from importlib import reload
+import maya.api.OpenMaya as om
 
 reload(shapes)
 
@@ -224,6 +225,9 @@ def mirror(symmetry=False, jointChain = ''):
 
 
 def jntOrient(lat='', jntList=[]):
+
+    #only on joint chain
+
     if len(jntList) == 0:
         jntList = cmds.ls(sl=True)
 
@@ -241,14 +245,17 @@ def jntOrient(lat='', jntList=[]):
         cmds.joint(jnt, edit=True, oj='xzy', secondaryAxisOrient='zup')
 
         if lat == 'Right':
+            child = cmds.listRelatives(jnt, children=True)
+            cmds.matchTransform(reference, child)
             value = cmds.getAttr(jnt+'.jointOrientY')
             value += 180
             cmds.setAttr(jnt+'.jointOrientY', value)
             
             cmds.matchTransform(child, reference, pos=True, rot=False)
 
-            child = cmds.listRelatives(jnt, children=True)
-            cmds.matchTransform(reference, child)
+            cmds.select(child)
+            cmds.FreezeTransformations()
+
 
     cmds.FreezeTransformations(jntList[-1:][0])
     cmds.setAttr(jntList[-1:][0] + '.jointOrientX', 0)
@@ -580,3 +587,137 @@ def doRename(mode, objs=[], search='', replace='', prefix='', suffix='', rename_
 
     return finalNames
 
+
+# -----------------------------------------------------------
+# SEL VERSION
+# -----------------------------------------------------------
+def cJO_orientSel(nAimAxis, nUpAxis, revAim, revUp, doAuto=False):
+    if nAimAxis == 'Z':
+        nAimAxis = 3
+    elif nAimAxis == 'Y':
+        nAimAxis = 2
+    else:
+        nAimAxis = 1
+
+    if nUpAxis == 'Z':
+        nUpAxis = 3
+    elif nUpAxis == 'Y':
+        nUpAxis = 2
+    else:
+        nUpAxis = 1
+
+    if nAimAxis == nUpAxis:
+        cmds.warning("Aim and Up axis are the same!")
+
+    aimAxis = [0, 0, 0]
+    upAxis = [0, 0, 0]
+
+    revAim = -1.0 if revAim else 1.0
+    revUp = -1.0 if revUp else 1.0
+
+    aimAxis[nAimAxis - 1] = revAim
+    upAxis[nUpAxis - 1] = revUp
+
+    upDir = [1.0, 0.0, 0.0]
+    doAuto = False
+
+    joints = cmds.ls(sl=True, type="joint")
+
+    cJO_orient(joints, aimAxis, upAxis, upDir, doAuto)
+
+    cmds.select(joints)
+
+
+# -----------------------------------------------------------
+# ORIENT PART
+# -----------------------------------------------------------
+def cJO_orient(joints, aimAxis, upAxis, upDir, doAuto):
+
+    prevUp = om.MVector(0, 0, 0)
+
+    for i, jnt in enumerate(joints):
+
+        childs = cmds.listRelatives(jnt, children=True, type=["transform", "joint"]) or []
+        if childs:
+            childs = cmds.parent(childs, world=True)
+
+        parent = (cmds.listRelatives(jnt, parent=True) or [None])[0]
+
+        aimTgt = None
+        for c in childs:
+            if cmds.nodeType(c) == "joint":
+                aimTgt = c
+                break
+
+        if aimTgt:
+            upVec = [0, 0, 0]
+
+            if doAuto:
+                posJ = cmds.xform(jnt, q=True, ws=True, rp=True)
+                posP = cmds.xform(parent, q=True, ws=True, rp=True) if parent else posJ
+
+                tol = 0.0001
+
+                if not parent or all(abs(posJ[x] - posP[x]) <= tol for x in range(3)):
+                    aimChilds = cmds.listRelatives(aimTgt, children=True) or []
+                    aimChild = next((c for c in aimChilds if cmds.nodeType(c) == "joint"), None)
+                    upVec = cJO_getCrossDir(jnt, aimTgt, aimChild)
+                else:
+                    upVec = cJO_getCrossDir(parent, jnt, aimTgt)
+
+            if not doAuto or upVec == [0, 0, 0]:
+                upVec = upDir
+
+            cons = cmds.aimConstraint(
+                aimTgt,
+                jnt,
+                aimVector=aimAxis,
+                upVector=upAxis,
+                worldUpVector=upVec,
+                worldUpType="vector"
+            )
+            cmds.delete(cons)
+
+            curUp = om.MVector(*upVec).normalize()
+            dot = curUp * prevUp
+            prevUp = om.MVector(*upVec)
+
+            if i > 0 and dot <= 0:
+                cmds.xform(jnt, r=True, os=True, ra=[a * 180 for a in aimAxis])
+                prevUp *= -1
+
+            cmds.joint(jnt, e=True, zso=True)
+            cmds.makeIdentity(jnt, apply=True)
+
+        elif parent:
+            cons = cmds.orientConstraint(parent, jnt)
+            cmds.delete(cons)
+
+            cmds.joint(jnt, e=True, zso=True)
+            cmds.makeIdentity(jnt, apply=True)
+
+        if childs:
+            cmds.parent(childs, jnt)
+
+
+# -----------------------------------------------------------
+# CROSS PRODUCT
+# -----------------------------------------------------------
+def cJO_getCrossDir(objA, objB, objC):
+    if not objA or not objB or not objC:
+        return [0, 0, 0]
+
+    if not (cmds.objExists(objA) and cmds.objExists(objB) and cmds.objExists(objC)):
+        return [0, 0, 0]
+
+    posA = cmds.xform(objA, q=True, ws=True, rp=True)
+    posB = cmds.xform(objB, q=True, ws=True, rp=True)
+    posC = cmds.xform(objC, q=True, ws=True, rp=True)
+
+    v1 = om.MVector(posA) - om.MVector(posB)
+    v2 = om.MVector(posC) - om.MVector(posB)
+
+    cross = v1 ^ v2
+    cross.normalize()
+
+    return [cross.x, cross.y, cross.z]

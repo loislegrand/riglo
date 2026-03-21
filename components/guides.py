@@ -142,6 +142,7 @@ class GuideLoader():
         TopGds = self.hierarchyGuides()
 
         allInfos = bs.getUIsInfos(UiPart='Limb', printInfos=True)
+        print(allInfos)
         
         if allInfos[1] == 'Front':
             reverse = 55
@@ -149,16 +150,16 @@ class GuideLoader():
         else:
             reverse = 45
 
-        guideArm = cmds.joint(p=(9, 95, 53), n='GD_arm_{}_Left'.format(allInfos[1]))
-        guideForearm = cmds.joint(p=(9, 48, reverse), n='GD_forearm_{}_Left'.format(allInfos[1]))
-        guideHand = cmds.joint(p=(9, 20, 51), n='GD_hand_{}_Left'.format(allInfos[1]))
-        guideHandEnd = cmds.joint(p=(9, 8, 58), n='GD_finger_{}_Left'.format(allInfos[1]))
-        guideEnd = cmds.joint(p=(9, 0, 60), n='GD_fingerEnd_{}_Left'.format(allInfos[1]))
+        guideArm = cmds.joint(p=(9, 95, 53), n='GDqL_upLeg_{}_Left'.format(allInfos[1]))
+        guideForearm = cmds.joint(p=(9, 48, reverse), n='GDqL_midLeg_{}_Left'.format(allInfos[1]))
+        guideHand = cmds.joint(p=(9, 20, 51), n='GDqL_lowLeg_{}_Left'.format(allInfos[1]))
+        guideHandEnd = cmds.joint(p=(9, 8, 58), n='GDqL_finger_{}_Left'.format(allInfos[1]))
+        guideEnd = cmds.joint(p=(9, 0, 60), n='GDqL_fingerEnd_{}_Left'.format(allInfos[1]))
         
-        OutNode = cmds.spaceLocator(n='LOC_Out_{}_Left'.format(allInfos[1]))[0]
-        InNode = cmds.spaceLocator(n='LOC_In_{}_Left'.format(allInfos[1]))[0]
-        ToeRoll = cmds.spaceLocator(n='LOC_ToeRoll_{}_Left'.format(allInfos[1]))[0]
-        HeelRoll = cmds.spaceLocator(n='LOC_HeelRoll_{}_Left'.format(allInfos[1]))[0]
+        OutNode = cmds.spaceLocator(n='LOCqL_Out_{}_{}'.format(allInfos[1], allInfos[2]))[0]
+        InNode = cmds.spaceLocator(n='LOCqL_In_{}_{}'.format(allInfos[1], allInfos[2]))[0]
+        ToeRoll = cmds.spaceLocator(n='LOCqL_ToeRoll_{}_{}'.format(allInfos[1], allInfos[2]))[0]
+        HeelRoll = cmds.spaceLocator(n='LOCqL_HeelRoll_{}_{}'.format(allInfos[1], allInfos[2]))[0]
         cmds.parent(OutNode, InNode, ToeRoll, HeelRoll, guideEnd)
 
         if allInfos[2] == 'Left':
@@ -195,16 +196,38 @@ class GuideLoader():
 
         allInfos = bs.getUIsInfos(UiPart='Limb', printInfos=True)
 
-        guideUpLeg = cmds.joint(p=(9, 90, 2.5), n='GD_upLeg_{}_Left'.format(allInfos[1]))
-        guideLowLeg = cmds.joint(p=(9, 50, 2.5), n='GD_lowLeg_{}_Left'.format(allInfos[1]))
-        guideFoot = cmds.joint(p=(9, 10, 0), n='GD_foot_{}_Left'.format(allInfos[1]))
-        guideToes = cmds.joint(p=(9, 3, 12), n='GD_toes_{}_Left'.format(allInfos[1]))
-        guideToesEnd = cmds.joint(p=(9, 3, 20), n='GD_toesEnd_{}_Left'.format(allInfos[1]))
+        guideUpLeg = cmds.joint(p=(9, 90, 2.5), n='GDbL_upLeg_{}_Left'.format(allInfos[1]))
+        guideLowLeg = cmds.joint(p=(9, 50, 2.5), n='GDbL_lowLeg_{}_Left'.format(allInfos[1]))
+        guideFoot = cmds.joint(p=(9, 10, 0), n='GDbL_foot_{}_Left'.format(allInfos[1]))
+        guideToes = cmds.joint(p=(9, 3, 12), n='GDbL_toes_{}_Left'.format(allInfos[1]))
+        guideEnd = cmds.joint(p=(9, 3, 20), n='GDbL_toesEnd_{}_Left'.format(allInfos[1]))
+
+        OutNode = cmds.spaceLocator(n='LOCbL_Out_{}_{}'.format(allInfos[1], allInfos[2]))[0]
+        InNode = cmds.spaceLocator(n='LOCbL_In_{}_{}'.format(allInfos[1], allInfos[2]))[0]
+        ToeRoll = cmds.spaceLocator(n='LOCbL_ToeRoll_{}_{}'.format(allInfos[1], allInfos[2]))[0]
+        HeelRoll = cmds.spaceLocator(n='LOCbL_HeelRoll_{}_{}'.format(allInfos[1], allInfos[2]))[0]
+        cmds.parent(OutNode, InNode, ToeRoll, HeelRoll, guideEnd)
+
+        if allInfos[2] == 'Left':
+            PosX = 1
+        elif allInfos[2] == 'Right':
+            PosX = -1
+        else:
+            PosX = 0
+            
+        cmds.xform(OutNode, ro=(0, 0, 0), t=(PosX*8, 0, 0), s=(1, 1, 1))
+        cmds.xform(InNode, ro=(0, 0, 0), t=(PosX*-6, 0, 0), s=(1, 1, 1))
+        cmds.xform(ToeRoll, ro=(0, 0, 0), t=(0, 0, 9), s=(1, 1, 1))
+        cmds.xform(HeelRoll, ro=(0, 0, 0), t=(0, 0, -6), s=(1, 1, 1))
 
         self.joint_list.append(guideUpLeg)
         self.joint_list.append(guideLowLeg)
         self.joint_list.append(guideFoot)
         self.joint_list.append(guideToes)
+        self.joint_list.append(OutNode)
+        self.joint_list.append(InNode)
+        self.joint_list.append(ToeRoll)
+        self.joint_list.append(HeelRoll)
 
         if allInfos[2] == 'Right':
             chain = bs.mirror(symmetry=True, jointChain = guideUpLeg)[0]
