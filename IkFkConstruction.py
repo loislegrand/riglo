@@ -5,7 +5,7 @@ import RigLo.basic as bs
 import RigLo.components.nodes as nd
 import RigLo.utils.ribbonSurf as rib
 from importlib import reload
-from baseHierarchy import hierarchy
+from RigLo.baseHierarchy import hierarchy
 
 reload(bs)
 reload(rib)
@@ -21,7 +21,7 @@ add a volume parameter
 
 """
 def LimbDetection():
-    
+
     # Sur le squelette, lire les labels
     childList = cmds.listRelatives("SKINNING", allDescendents=1, type="joint")
     for child in childList :

@@ -135,6 +135,8 @@ class GuideLoader():
         
         bs.BRA_rotatePlane(self.joint_list[0], self.joint_list[1], self.joint_list[2], '_'.join(allInfos[:3]))
         
+        self.addLabels(self.joint_list)
+
         return self.joint_list
 
     def loadGuidesQuadLeg(self):
@@ -153,8 +155,8 @@ class GuideLoader():
         guideArm = cmds.joint(p=(9, 95, 53), n='GDqL_upLeg_{}_Left'.format(allInfos[1]))
         guideForearm = cmds.joint(p=(9, 48, reverse), n='GDqL_midLeg_{}_Left'.format(allInfos[1]))
         guideHand = cmds.joint(p=(9, 20, 51), n='GDqL_lowLeg_{}_Left'.format(allInfos[1]))
-        guideHandEnd = cmds.joint(p=(9, 8, 58), n='GDqL_finger_{}_Left'.format(allInfos[1]))
-        guideEnd = cmds.joint(p=(9, 0, 60), n='GDqL_fingerEnd_{}_Left'.format(allInfos[1]))
+        guideHandEnd = cmds.joint(p=(9, 8, 58), n='GDqL_hand_{}_Left'.format(allInfos[1]))
+        guideEnd = cmds.joint(p=(9, 0, 60), n='GDqL_handEnd_{}_Left'.format(allInfos[1]))
         
         OutNode = cmds.spaceLocator(n='LOCqL_Out_{}_{}'.format(allInfos[1], allInfos[2]))[0]
         InNode = cmds.spaceLocator(n='LOCqL_In_{}_{}'.format(allInfos[1], allInfos[2]))[0]
@@ -188,6 +190,8 @@ class GuideLoader():
             self.joint_list = (cmds.listRelatives(chain, ad=True, typ='joint') + [chain])[::-1]
 
         bs.BRA_rotatePlane(self.joint_list[0], self.joint_list[1], self.joint_list[2], '_'.join(allInfos[:3]))
+
+        self.addLabels(self.joint_list)
 
         return self.joint_list
     
@@ -234,6 +238,8 @@ class GuideLoader():
             self.joint_list = (cmds.listRelatives(chain, ad=True, typ='joint') + [chain])[::-1]
 
         bs.BRA_rotatePlane(self.joint_list[0], self.joint_list[1], self.joint_list[2], '_'.join(allInfos[:3]))
+
+        self.addLabels(self.joint_list)
 
         return self.joint_list
 
@@ -332,3 +338,14 @@ class GuideLoader():
 
         #Selection du mainCtrl
         cmds.select(mainCtrl[0])
+
+    def addLabels(self, joints):
+        if len(joints) == 0:
+            cmds.error('select a joint') 
+
+        for obj in joints:
+            if cmds.objectType(obj, i='joint'):
+                name = obj.split('_')[1]
+                cmds.setAttr(obj+'.drawLabel', 1)
+                cmds.setAttr(obj+'.type', 18)
+                cmds.setAttr(obj+'.otherType', name, type="string")
