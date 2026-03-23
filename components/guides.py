@@ -109,6 +109,7 @@ class GuideLoader():
 
 
     def loadGuidesArm(self):
+        joint_list = []
 
         allInfos = bs.getUIsInfos(UiPart='Limb', printInfos=True)
 
@@ -125,21 +126,23 @@ class GuideLoader():
         cmds.xform(guideForearm, t=(25, 0, -2))
         cmds.xform(guideHand, t=(25, 0, 2))
 
-        self.joint_list.append(guideArm)
-        self.joint_list.append(guideForearm)
-        self.joint_list.append(guideHand)
+        joint_list.append(guideArm)
+        joint_list.append(guideForearm)
+        joint_list.append(guideHand)
 
         if allInfos[2] == 'Right':
             chain = bs.mirror(symmetry=True, jointChain = guideArm)[0]
-            self.joint_list = (cmds.listRelatives(chain, ad=True, typ='joint') + [chain])[::-1]
+            joint_list = (cmds.listRelatives(chain, ad=True, typ='joint') + [chain])[::-1]
         
-        bs.BRA_rotatePlane(self.joint_list[0], self.joint_list[1], self.joint_list[2], '_'.join(allInfos[:3]))
+        bs.BRA_rotatePlane(joint_list[0], joint_list[1], joint_list[2], '_'.join(allInfos[:3]))
         
-        self.addLabels(self.joint_list)
+        self.addLabels(joint_list)
 
-        return self.joint_list
+        return joint_list
 
     def loadGuidesQuadLeg(self):
+
+        joint_list = []
 
         TopGds = self.hierarchyGuides()
 
@@ -155,47 +158,44 @@ class GuideLoader():
         guideArm = cmds.joint(p=(9, 95, 53), n='GDqL_upLeg_{}_Left'.format(allInfos[1]))
         guideForearm = cmds.joint(p=(9, 48, reverse), n='GDqL_midLeg_{}_Left'.format(allInfos[1]))
         guideHand = cmds.joint(p=(9, 20, 51), n='GDqL_lowLeg_{}_Left'.format(allInfos[1]))
-        guideHandEnd = cmds.joint(p=(9, 8, 58), n='GDqL_hand_{}_Left'.format(allInfos[1]))
-        guideEnd = cmds.joint(p=(9, 0, 60), n='GDqL_handEnd_{}_Left'.format(allInfos[1]))
+        guideHandEnd = cmds.joint(p=(9, 8, 55), n='GDqL_toes_{}_Left'.format(allInfos[1]))
+        cmds.setAttr(guideHandEnd+'.drawStyle', 3)
+        guideEnd = cmds.joint(p=(9, 0, 60), n='GDqL_toesEnd_{}_Left'.format(allInfos[1]))
         
-        OutNode = cmds.spaceLocator(n='LOCqL_Out_{}_{}'.format(allInfos[1], allInfos[2]))[0]
-        InNode = cmds.spaceLocator(n='LOCqL_In_{}_{}'.format(allInfos[1], allInfos[2]))[0]
-        ToeRoll = cmds.spaceLocator(n='LOCqL_ToeRoll_{}_{}'.format(allInfos[1], allInfos[2]))[0]
-        HeelRoll = cmds.spaceLocator(n='LOCqL_HeelRoll_{}_{}'.format(allInfos[1], allInfos[2]))[0]
-        cmds.parent(OutNode, InNode, ToeRoll, HeelRoll, guideEnd)
-
         if allInfos[2] == 'Left':
             PosX = 1
         elif allInfos[2] == 'Right':
             PosX = -1
         else:
             PosX = 0
-            
-        cmds.xform(OutNode, ro=(0, 0, 0), t=(PosX*8, 0, 0), s=(1, 1, 1))
-        cmds.xform(InNode, ro=(0, 0, 0), t=(PosX*-6, 0, 0), s=(1, 1, 1))
-        cmds.xform(ToeRoll, ro=(0, 0, 0), t=(0, 0, 9), s=(1, 1, 1))
-        cmds.xform(HeelRoll, ro=(0, 0, 0), t=(0, 0, -6), s=(1, 1, 1))
 
-        self.joint_list.append(guideArm)
-        self.joint_list.append(guideForearm)
-        self.joint_list.append(guideHand)
-        self.joint_list.append(guideHandEnd)
-        self.joint_list.append(OutNode)
-        self.joint_list.append(InNode)
-        self.joint_list.append(ToeRoll)
-        self.joint_list.append(HeelRoll)
+        OutNode = cmds.joint(p=(PosX*12, 0, 58), n='LOCqL_ext_{}_{}'.format(allInfos[1], allInfos[2]))
+        InNode = cmds.joint(p=(PosX*6, 0, 58), n='LOCqL_int_{}_{}'.format(allInfos[1], allInfos[2]))
+        HeelRoll = cmds.joint(p=(9, 0, 52), n='LOCqL_heel_{}_{}'.format(allInfos[1], allInfos[2]))
+        cmds.parent(OutNode, InNode, HeelRoll, guideHandEnd)
+
+        joint_list.append(guideArm)
+        joint_list.append(guideForearm)
+        joint_list.append(guideHand)
+        joint_list.append(guideHandEnd)
+        joint_list.append(OutNode)
+        joint_list.append(InNode)
+        joint_list.append(HeelRoll)
         
         if allInfos[2] == 'Right':
             chain = bs.mirror(symmetry=True, jointChain = guideArm)[0]
-            self.joint_list = (cmds.listRelatives(chain, ad=True, typ='joint') + [chain])[::-1]
+            joint_list = (cmds.listRelatives(chain, ad=True, typ='joint') + [chain])[::-1]
 
-        bs.BRA_rotatePlane(self.joint_list[0], self.joint_list[1], self.joint_list[2], '_'.join(allInfos[:3]))
+        bs.BRA_rotatePlane(joint_list[0], joint_list[1], joint_list[2], '_'.join(allInfos[:3]))
 
-        self.addLabels(self.joint_list)
+        self.addLabels(joint_list)
 
-        return self.joint_list
+        return joint_list
     
     def loadGuidesBiLeg(self):
+        
+        joint_list = []
+
         TopGds = self.hierarchyGuides()
 
         allInfos = bs.getUIsInfos(UiPart='Limb', printInfos=True)
@@ -204,13 +204,8 @@ class GuideLoader():
         guideLowLeg = cmds.joint(p=(9, 50, 2.5), n='GDbL_lowLeg_{}_Left'.format(allInfos[1]))
         guideFoot = cmds.joint(p=(9, 10, 0), n='GDbL_foot_{}_Left'.format(allInfos[1]))
         guideToes = cmds.joint(p=(9, 3, 12), n='GDbL_toes_{}_Left'.format(allInfos[1]))
-        guideEnd = cmds.joint(p=(9, 3, 20), n='GDbL_toesEnd_{}_Left'.format(allInfos[1]))
-
-        OutNode = cmds.spaceLocator(n='LOCbL_Out_{}_{}'.format(allInfos[1], allInfos[2]))[0]
-        InNode = cmds.spaceLocator(n='LOCbL_In_{}_{}'.format(allInfos[1], allInfos[2]))[0]
-        ToeRoll = cmds.spaceLocator(n='LOCbL_ToeRoll_{}_{}'.format(allInfos[1], allInfos[2]))[0]
-        HeelRoll = cmds.spaceLocator(n='LOCbL_HeelRoll_{}_{}'.format(allInfos[1], allInfos[2]))[0]
-        cmds.parent(OutNode, InNode, ToeRoll, HeelRoll, guideEnd)
+        guideEnd = cmds.joint(p=(9, 0, 20), n='GDbL_toesEnd_{}_Left'.format(allInfos[1]))
+        cmds.setAttr(guideToes+'.drawStyle', 3)
 
         if allInfos[2] == 'Left':
             PosX = 1
@@ -218,30 +213,30 @@ class GuideLoader():
             PosX = -1
         else:
             PosX = 0
-            
-        cmds.xform(OutNode, ro=(0, 0, 0), t=(PosX*8, 0, 0), s=(1, 1, 1))
-        cmds.xform(InNode, ro=(0, 0, 0), t=(PosX*-6, 0, 0), s=(1, 1, 1))
-        cmds.xform(ToeRoll, ro=(0, 0, 0), t=(0, 0, 9), s=(1, 1, 1))
-        cmds.xform(HeelRoll, ro=(0, 0, 0), t=(0, 0, -6), s=(1, 1, 1))
 
-        self.joint_list.append(guideUpLeg)
-        self.joint_list.append(guideLowLeg)
-        self.joint_list.append(guideFoot)
-        self.joint_list.append(guideToes)
-        self.joint_list.append(OutNode)
-        self.joint_list.append(InNode)
-        self.joint_list.append(ToeRoll)
-        self.joint_list.append(HeelRoll)
+        OutNode = cmds.joint(p=(PosX*12, 0, 12), n='LOCbL_ext_{}_{}'.format(allInfos[1], allInfos[2]))
+        InNode = cmds.joint(p=(PosX*6, 0, 12), n='LOCbL_int_{}_{}'.format(allInfos[1], allInfos[2]))
+        HeelRoll = cmds.joint(p=(9, 0, 0), n='LOCbL_heel_{}_{}'.format(allInfos[1], allInfos[2]))
+        cmds.parent(OutNode, InNode, HeelRoll, guideToes)
+
+        joint_list.append(guideUpLeg)
+        joint_list.append(guideLowLeg)
+        joint_list.append(guideFoot)
+        joint_list.append(guideToes)
+        joint_list.append(guideEnd)
+        joint_list.append(OutNode)
+        joint_list.append(InNode)
+        joint_list.append(HeelRoll)
 
         if allInfos[2] == 'Right':
             chain = bs.mirror(symmetry=True, jointChain = guideUpLeg)[0]
-            self.joint_list = (cmds.listRelatives(chain, ad=True, typ='joint') + [chain])[::-1]
+            joint_list = (cmds.listRelatives(chain, ad=True, typ='joint') + [chain])[::-1]
 
-        bs.BRA_rotatePlane(self.joint_list[0], self.joint_list[1], self.joint_list[2], '_'.join(allInfos[:3]))
+        bs.BRA_rotatePlane(joint_list[0], joint_list[1], joint_list[2], '_'.join(allInfos[:3]))
 
-        self.addLabels(self.joint_list)
+        self.addLabels(joint_list)
 
-        return self.joint_list
+        return joint_list
 
     def searchConstruct(self):
 

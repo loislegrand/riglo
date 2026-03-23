@@ -58,14 +58,21 @@ def LimbDetection():
 
 
 def createIkRpChain(biLeg, objs = []):
-    #if there is a base hierarchy no ned to create a new one
-    if not cmds.objExists('SKINNING'):
-        hierarchy('NEWNAME')
-    
-    #_____ BUILD PART _____
     if len(objs) == 0:
         objs = cmds.ls(selection=True)
 
+    """#if there is a base hierarchy no ned to create a new one
+    if not cmds.objExists('SKINNING'):
+        hierarchy('NEWNAME')"""
+
+    #_____ DETECTION PART _____
+    
+
+    print(objs)
+    print(cmds.getAttr(cmds.listRelatives(objs[-1], c=True, typ='joint')[0]+'.otherType'))
+    
+    #_____ BUILD PART _____
+    
     topNodeName = cmds.listRelatives(objs[0], p=True)[0]
     names = topNodeName.split('_')
     name = ''
@@ -274,3 +281,50 @@ def createIkRpChain(biLeg, objs = []):
 
 
     #_____ RENAMING PART _____
+
+def biRevFoot(ctrl, endJoint):
+    if cmds.getAttr(cmds.listRelatives(ctrl, p=True)+".otherType") == 'toes':
+        toes = cmds.listRelatives(ctrl, p=True)[0]
+    childList = cmds.listRelatives(endJoint, allDescendents=1, type="joint")
+    for child in childList :
+        labelType = cmds.getAttr(child+".otherType")
+        if labelType == 'int':
+            int = child
+        elif labelType == 'out':
+            ext = child
+        elif labelType == 'heel':
+            heel = child
+
+    cmds.setAttr(int+'.drawStyle', 2)
+    cmds.setAttr(ext+'.drawStyle', 2)
+    cmds.setAttr(heel+'.drawStyle', 2)
+
+    IkSC1 = cmds.ikHandle(sj=toes,ee=cmds.lsitRelatives(toes, p=True),sol='ikSCsolver', n='IkSC_toes_'+side)
+    IkScHandle1 = IkSC1[0]
+    
+    IkSC2 = cmds.ikHandle(sj=legJoint[3],ee=legJoint[4],sol='ikSCsolver', n='IkSC_toesEnd_'+side)
+    IkScHandle2 = IkSC2[0]
+    
+    cmds.parent(IkHandle,'RF_foot'+'_'+side)
+    cmds.parent(IkScHandle1,'RF_toes'+'_'+side)
+    cmds.parent(IkScHandle2,'RF_toesEnd'+'_'+side)
+    
+    
+    #create attr
+    cmds.addAttr(ctrl, min=0, max=1, ln='IKFK',at='float',dv=1.0,k=True)
+    cmds.addAttr(ctrl, ln='FootBank',at='float',dv=0,k=True)
+    cmds.addAttr(ctrl, ln='FootRoll',at='float',dv=0,k=True)
+    cmds.addAttr(ctrl, ln='BallTwist',at='float',dv=0,k=True)
+    cmds.addAttr(ctrl, ln='FootTwist',at='float',dv=0,k=True)
+    cmds.addAttr(ctrl, ln='ToeRoll',at='float',dv=0,k=True)
+    cmds.addAttr(ctrl, ln='ToeTwist',at='float',dv=0,k=True)
+    
+    #connect attr
+    cmds.connectAttr(ctrl+'.FootBank',int+'.rotateZ')
+    cmds.connectAttr(ctrl+'.FootBank',ext+'.rotateZ')
+    cmds.connectAttr(ctrl+'.FootRoll',heel+'.rotateX')
+    cmds.connectAttr(ctrl+'.FootRoll',toes+'.rotateX')
+    cmds.connectAttr(ctrl+'.ToeRoll',endJoint+'.rotateX')
+    cmds.connectAttr(ctrl+'.ToeTwist',endJoint+'.rotateY')
+    cmds.connectAttr(ctrl+'.FootTwist',toes+'.rotateY')
+    cmds.connectAttr(ctrl+'.BallTwist',heel+'.rotateY')

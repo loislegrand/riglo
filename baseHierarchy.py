@@ -83,6 +83,3 @@ def hierarchy(assetName):
     cmds.setAttr(controlersGrp+".rotate", lock=1, keyable=0, channelBox=0)
     cmds.setAttr(controlersGrp+".scale", lock=1, keyable=0, channelBox=0)
     cmds.setAttr(controlersGrp+".visibility", lock=1, keyable=0, channelBox=0)
-
-    #Selection du mainCtrl
-    cmds.select(mainCtrl[0])
