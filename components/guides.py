@@ -159,8 +159,11 @@ class GuideLoader():
         guideForearm = cmds.joint(p=(9, 48, reverse), n='GDqL_midLeg_{}_Left'.format(allInfos[1]))
         guideHand = cmds.joint(p=(9, 20, 51), n='GDqL_lowLeg_{}_Left'.format(allInfos[1]))
         guideHandEnd = cmds.joint(p=(9, 8, 55), n='GDqL_toes_{}_Left'.format(allInfos[1]))
-        cmds.setAttr(guideHandEnd+'.drawStyle', 3)
         guideEnd = cmds.joint(p=(9, 0, 60), n='GDqL_toesEnd_{}_Left'.format(allInfos[1]))
+        OutNode = cmds.joint(p=(PosX*12, 0, 58), n='LOCqL_ext_{}_{}'.format(allInfos[1], allInfos[2]))
+        InNode = cmds.joint(p=(PosX*6, 0, 58), n='LOCqL_int_{}_{}'.format(allInfos[1], allInfos[2]))
+        HeelRoll = cmds.joint(p=(9, 0, 52), n='LOCqL_heel_{}_{}'.format(allInfos[1], allInfos[2]))
+        cmds.setAttr(guideHandEnd+'.drawStyle', 3)
         
         if allInfos[2] == 'Left':
             PosX = 1
@@ -169,15 +172,13 @@ class GuideLoader():
         else:
             PosX = 0
 
-        OutNode = cmds.joint(p=(PosX*12, 0, 58), n='LOCqL_ext_{}_{}'.format(allInfos[1], allInfos[2]))
-        InNode = cmds.joint(p=(PosX*6, 0, 58), n='LOCqL_int_{}_{}'.format(allInfos[1], allInfos[2]))
-        HeelRoll = cmds.joint(p=(9, 0, 52), n='LOCqL_heel_{}_{}'.format(allInfos[1], allInfos[2]))
         cmds.parent(OutNode, InNode, HeelRoll, guideHandEnd)
 
         joint_list.append(guideArm)
         joint_list.append(guideForearm)
         joint_list.append(guideHand)
         joint_list.append(guideHandEnd)
+        joint_list.append(guideEnd)
         joint_list.append(OutNode)
         joint_list.append(InNode)
         joint_list.append(HeelRoll)
@@ -200,13 +201,6 @@ class GuideLoader():
 
         allInfos = bs.getUIsInfos(UiPart='Limb', printInfos=True)
 
-        guideUpLeg = cmds.joint(p=(9, 90, 2.5), n='GDbL_upLeg_{}_Left'.format(allInfos[1]))
-        guideLowLeg = cmds.joint(p=(9, 50, 2.5), n='GDbL_lowLeg_{}_Left'.format(allInfos[1]))
-        guideFoot = cmds.joint(p=(9, 10, 0), n='GDbL_foot_{}_Left'.format(allInfos[1]))
-        guideToes = cmds.joint(p=(9, 3, 12), n='GDbL_toes_{}_Left'.format(allInfos[1]))
-        guideEnd = cmds.joint(p=(9, 0, 20), n='GDbL_toesEnd_{}_Left'.format(allInfos[1]))
-        cmds.setAttr(guideToes+'.drawStyle', 3)
-
         if allInfos[2] == 'Left':
             PosX = 1
         elif allInfos[2] == 'Right':
@@ -214,9 +208,16 @@ class GuideLoader():
         else:
             PosX = 0
 
+        guideUpLeg = cmds.joint(p=(9, 90, 2.5), n='GDbL_upLeg_{}_Left'.format(allInfos[1]))
+        guideLowLeg = cmds.joint(p=(9, 50, 2.5), n='GDbL_lowLeg_{}_Left'.format(allInfos[1]))
+        guideFoot = cmds.joint(p=(9, 10, 0), n='GDbL_foot_{}_Left'.format(allInfos[1]))
+        guideToes = cmds.joint(p=(9, 3, 12), n='GDbL_toes_{}_Left'.format(allInfos[1]))
+        guideEnd = cmds.joint(p=(9, 0, 20), n='GDbL_toesEnd_{}_Left'.format(allInfos[1]))
         OutNode = cmds.joint(p=(PosX*12, 0, 12), n='LOCbL_ext_{}_{}'.format(allInfos[1], allInfos[2]))
         InNode = cmds.joint(p=(PosX*6, 0, 12), n='LOCbL_int_{}_{}'.format(allInfos[1], allInfos[2]))
         HeelRoll = cmds.joint(p=(9, 0, 0), n='LOCbL_heel_{}_{}'.format(allInfos[1], allInfos[2]))
+        cmds.setAttr(guideToes+'.drawStyle', 3)
+
         cmds.parent(OutNode, InNode, HeelRoll, guideToes)
 
         joint_list.append(guideUpLeg)
@@ -361,7 +362,7 @@ class GuideLoader():
                 else:
                     cmds.warning('No top guide group found')
         
-        
+
         print(toSymList)
             
 

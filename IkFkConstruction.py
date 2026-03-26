@@ -79,22 +79,35 @@ def createIkRpChain(biLeg, objs = []):
     for n in names[1:]:
         name += '_' + n 
 
-    bs.cJO_orientSel('X', 'Y', True, False, doAuto=False)
+    bs.cJO_orientSel('X', 'Y', True, False, doAuto=False) # ATTENTION : should be side dependent
+    objs = cmds.ls(objs, l=True)
+    
     if biLeg:
         prefix = 'GDbL_'
+        ikTopJoint = cmds.duplicate(objs[0])
+        cmds.parent(ikTopJoint[0], w=True)
+        #newChainIk.insert(0, ikTopJoint)
     else:
-        prefix = 'GD_'
-    objs = bs.doRename(0, objs=objs, search=prefix, replace='')
-    print(objs)
+        """prefix = 'GD_'
+        newChainIk = bs.duplicate(objList=objs, allHierarchy =True )
+        newChainIk = newChainIk[0]
+        cmds.select(cl=True)"""
 
-    newChainIk = bs.duplicate(objList=objs, allHierarchy =True )
+    cmds.select(objs)        
+    objs = bs.doRename(0, search=prefix, replace='')
     cmds.select(cl=True)
-    bs.doRename(1, objs=newChainIk, prefix='JNT_Ik_',)
-    newChainIk = bs.doRename(0, objs=newChainIk, search='1', replace='')
-    print(newChainIk)
+
+    newChainIk = cmds.listRelatives(ikTopJoint[0], ad=True, pa=True)[::-1]
+    newChainIk.insert(0, ikTopJoint[0])
+    cmds.select(newChainIk)
+    bs.doRename(1, prefix='JNT_Ik_',)
+    bs.doRename(0, search='_GDbL', replace='')
+    bs.doRename(0, search='_LOCbL', replace='')
+    newChainIk = bs.doRename(0, search='1', replace='')
     newChainCtl = bs.controllers(jntList=objs[:4], ctrlShape='stCircle', name='C_Fk_')
     cmds.parent(cmds.listRelatives(newChainCtl[1], p=True)[0], newChainCtl[0] )
     cmds.parent(cmds.listRelatives(newChainCtl[2], p=True)[0], newChainCtl[1] )
+    print(newChainIk)
     
     ctlAttr = bs.IkFkBlend(objs[:4])
 
@@ -123,7 +136,7 @@ def createIkRpChain(biLeg, objs = []):
         cmds.parent(ikH, topRev[1])
         bs.parentCnst([IkCtl[0]], topRev[0], off=True, matx=False)
 
-    """#On global locator, addAttr length Up & Low limb : mult dL into the translate
+    #On global locator, addAttr length Up & Low limb : mult dL into the translate
     cmds.addAttr(ctlAttr[0], at="float", longName="stretch", min=0, max = 1, dv=1, keyable=1)
     cmds.addAttr(ctlAttr[0], at="float", longName="upLimbLength", min=0.05, dv=1, keyable=1)
     cmds.addAttr(ctlAttr[0], at="float", longName="lowLimbLength", min=0.05, dv=1, keyable=1)
@@ -184,7 +197,7 @@ def createIkRpChain(biLeg, objs = []):
         cmds.addAttr(switchCtl, ln = l, nn=n, proxy=ctlAttr[0] + '.' + l )
 
 
-    #create the ribbon btw articulation : create line btw 2 points, match pivot with 1rst object and move a bit forward 
+    """#create the ribbon btw articulation : create line btw 2 points, match pivot with 1rst object and move a bit forward 
 
     crv1tmp = bs.lineBtw(objs[0], objs[1], selectable=True)
     crv2tmp = bs.lineBtw(objs[1], objs[2], selectable=True)
@@ -292,6 +305,7 @@ def biRevFoot(ctrl, endJoint):
         elif labelType == 'heel':
             heel = child
 
+    print(heel, int, ext, toesEnd)
     #_____ Create 6 transforms nodes matching the diff end part 
     reverseJoints = [foot, endJoint, toesEnd, heel, ext, int]
     reversePoints = []
@@ -345,6 +359,6 @@ def biRevFoot(ctrl, endJoint):
     cmds.connectAttr(ctrl+'.FootTwist',reversePoints[1]+'.rotateY')
     cmds.connectAttr(ctrl+'.BallTwist',reversePoints[3]+'.rotateY')
 
-    #_____ RENAME _____"""
+    #_____ RENAME _____
 
     return [reversePoints[5], reversePoints[0]]
