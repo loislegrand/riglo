@@ -344,3 +344,24 @@ class GuideLoader():
                 cmds.setAttr(obj+'.drawLabel', 1)
                 cmds.setAttr(obj+'.type', 18)
                 cmds.setAttr(obj+'.otherType', name, type="string")
+
+    def guideSymetry(self):
+
+        objects = cmds.ls(selection=True, long=True) or []
+
+        toSymList = []
+        for obj in objects:
+            listParent = cmds.listRelatives(obj, ap=True)
+            for parent in listParent:
+                if parent.startswith('GDs_'):
+                    if not parent.endswith('_Center'):
+                        topGuide = parent
+                        toSymList.append(topGuide)
+                    pass
+                else:
+                    cmds.warning('No top guide group found')
+        
+        
+        print(toSymList)
+            
+

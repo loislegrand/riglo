@@ -80,17 +80,23 @@ def createIkRpChain(biLeg, objs = []):
         name += '_' + n 
 
     bs.cJO_orientSel('X', 'Y', True, False, doAuto=False)
-    objs = bs.doRename(0, objs=objs, search='GD_', replace='')
+    if biLeg:
+        prefix = 'GDbL_'
+    else:
+        prefix = 'GD_'
+    objs = bs.doRename(0, objs=objs, search=prefix, replace='')
+    print(objs)
 
-    newChainIk = bs.duplicate(objList=objs)
+    newChainIk = bs.duplicate(objList=objs, allHierarchy =True )
     cmds.select(cl=True)
     bs.doRename(1, objs=newChainIk, prefix='JNT_Ik_',)
     newChainIk = bs.doRename(0, objs=newChainIk, search='1', replace='')
-    newChainCtl = bs.controllers(jntList=objs, ctrlShape='stCircle', name='C_Fk_')
+    print(newChainIk)
+    newChainCtl = bs.controllers(jntList=objs[:4], ctrlShape='stCircle', name='C_Fk_')
     cmds.parent(cmds.listRelatives(newChainCtl[1], p=True)[0], newChainCtl[0] )
     cmds.parent(cmds.listRelatives(newChainCtl[2], p=True)[0], newChainCtl[1] )
     
-    ctlAttr = bs.IkFkBlend(objs)
+    ctlAttr = bs.IkFkBlend(objs[:4])
 
     topCtl = bs.controllers(jntList = [objs[0]] ,ctrlShape='crossArrow', name='C_top_')[0]
     bs.doRename(0, objs=[cmds.listRelatives(topCtl, p=True)[0]], search='GRP_', replace='GRP_up_')[0]
@@ -110,9 +116,14 @@ def createIkRpChain(biLeg, objs = []):
     cmds.poleVectorConstraint(PV, ikH[0])
     linePV = bs.lineBtw(PV, objs[1])
 
-    bs.parentCnst([IkCtl[0]], ikH[0], off=False, matx=False)
+    if not biLeg:
+        bs.parentCnst([IkCtl[0]], ikH[0], off=False, matx=False)
+    else:
+        topRev = biRevFoot(IkCtl[0], newChainIk[3])
+        cmds.parent(ikH, topRev[1])
+        bs.parentCnst([IkCtl[0]], topRev[0], off=True, matx=False)
 
-    #On global locator, addAttr length Up & Low limb : mult dL into the translate
+    """#On global locator, addAttr length Up & Low limb : mult dL into the translate
     cmds.addAttr(ctlAttr[0], at="float", longName="stretch", min=0, max = 1, dv=1, keyable=1)
     cmds.addAttr(ctlAttr[0], at="float", longName="upLimbLength", min=0.05, dv=1, keyable=1)
     cmds.addAttr(ctlAttr[0], at="float", longName="lowLimbLength", min=0.05, dv=1, keyable=1)
@@ -167,26 +178,6 @@ def createIkRpChain(biLeg, objs = []):
     cmds.connectAttr(ctlAttr[0]+'.scaleGlobale', globalStretch + '.input1')
     cmds.connectAttr(ctlAttr[0]+'.upLimbLength', midMult+'.input2')
     cmds.connectAttr(ctlAttr[0]+'.lowLimbLength', lowMult+'.input2')
-
-    if biLeg:
-
-        cmds.addAttr(IkCtl[0], ln="InverseFoot", nn="_____", at="enum", en="_____", k=True)
-        cmds.addAttr(IkCtl[0], ln='FootBank',at='float',dv=0,k=True)
-        cmds.addAttr(IkCtl[0], ln='FootRoll',at='float',dv=0,k=True)
-        cmds.addAttr(IkCtl[0], ln='BallTwist',at='float',dv=0,k=True)
-        cmds.addAttr(IkCtl[0], ln='FootTwist',at='float',dv=0,k=True)
-        cmds.addAttr(IkCtl[0], ln='ToeRoll',at='float',dv=0,k=True)
-        cmds.addAttr(IkCtl[0], ln='ToeTwist',at='float',dv=0,k=True)
-        
-        #connect attr
-        """cmds.connectAttr(ctrl+'.FootBank','RF_int'+'_'+side+'.rotateZ')
-        cmds.connectAttr(ctrl+'.FootBank','RF_ext'+'_'+side+'.rotateZ')
-        cmds.connectAttr(ctrl+'.FootRoll','RF_heel'+'_'+side+'.rotateX')
-        cmds.connectAttr(ctrl+'.FootRoll','RF_toes'+'_'+side+'.rotateX')
-        cmds.connectAttr(ctrl+'.ToeRoll','RF_toesEnd'+'_'+side+'.rotateX')
-        cmds.connectAttr(ctrl+'.ToeTwist','RF_toesEnd'+'_'+side+'.rotateY')
-        cmds.connectAttr(ctrl+'.FootTwist','RF_toes'+'_'+side+'.rotateY')
-        cmds.connectAttr(ctrl+'.BallTwist','RF_heel'+'_'+side+'.rotateY')"""
 
     for l, n in bs.listExtraAttr(ctlAttr[0]).items():
         print(l, n)
@@ -259,6 +250,7 @@ def createIkRpChain(biLeg, objs = []):
 
     #if GDs Biped leg =>  ajouter les param de inverse foot
     
+    
 
     #_____ TIDY UP PART _____
     oldGD = cmds.listRelatives(objs[0], p=True)
@@ -280,38 +272,62 @@ def createIkRpChain(biLeg, objs = []):
     #FkCtl into the group 
 
 
-    #_____ RENAMING PART _____
+    #_____ RENAMING PART _____"""
 
 def biRevFoot(ctrl, endJoint):
-    if cmds.getAttr(cmds.listRelatives(ctrl, p=True)+".otherType") == 'toes':
-        toes = cmds.listRelatives(ctrl, p=True)[0]
+    print(endJoint) # toe joint
+    print(cmds.getAttr(cmds.listRelatives(endJoint, c=True)[0]+".otherType"))
+    if cmds.getAttr(cmds.listRelatives(endJoint, c=True)[0]+".otherType") == 'toesEnd':
+        toesEnd = cmds.listRelatives(endJoint, c=True)[0]
+        foot = cmds.listRelatives(endJoint, p=True, typ='joint')[0]
+    else:
+        cmds.error('cannot find the reverse part')
     childList = cmds.listRelatives(endJoint, allDescendents=1, type="joint")
     for child in childList :
         labelType = cmds.getAttr(child+".otherType")
         if labelType == 'int':
             int = child
-        elif labelType == 'out':
+        elif labelType == 'ext':
             ext = child
         elif labelType == 'heel':
             heel = child
 
-    cmds.setAttr(int+'.drawStyle', 2)
-    cmds.setAttr(ext+'.drawStyle', 2)
-    cmds.setAttr(heel+'.drawStyle', 2)
+    #_____ Create 6 transforms nodes matching the diff end part 
+    reverseJoints = [foot, endJoint, toesEnd, heel, ext, int]
+    reversePoints = []
+    print(reverseJoints)
 
-    IkSC1 = cmds.ikHandle(sj=toes,ee=cmds.lsitRelatives(toes, p=True),sol='ikSCsolver', n='IkSC_toes_'+side)
+    for obj in reverseJoints:
+        name = obj.split('_')
+        newName = 'RF_' + '_'.join(name[1:])
+        GRP = cmds.group(n= newName, em=True)
+        cmds.matchTransform(GRP, obj)
+        reversePoints.append(GRP)
+
+    IkSC1 = cmds.ikHandle(sj=foot,ee=endJoint,sol='ikSCsolver')
     IkScHandle1 = IkSC1[0]
     
-    IkSC2 = cmds.ikHandle(sj=legJoint[3],ee=legJoint[4],sol='ikSCsolver', n='IkSC_toesEnd_'+side)
+    IkSC2 = cmds.ikHandle(sj=endJoint,ee=toesEnd,sol='ikSCsolver')
     IkScHandle2 = IkSC2[0]
     
-    cmds.parent(IkHandle,'RF_foot'+'_'+side)
-    cmds.parent(IkScHandle1,'RF_toes'+'_'+side)
-    cmds.parent(IkScHandle2,'RF_toesEnd'+'_'+side)
+    cmds.parent(IkScHandle1, reversePoints[1])
+    cmds.parent(IkScHandle2, reversePoints[2])
+
+    #organize the reverse points 
+    cmds.parent(reversePoints[0], reversePoints[1])
+    cmds.parent(reversePoints[1], reversePoints[2])
+    cmds.parent(reversePoints[2], reversePoints[3])
+    cmds.parent(reversePoints[3], reversePoints[4])
+    cmds.parent(reversePoints[4], reversePoints[5])
     
+    #transformation constraint
+    cmds.transformLimits(reversePoints[1], rx =(0,45),erx=(1,0))
+    cmds.transformLimits(reversePoints[3], rx =(-45,0),erx=(0,1))
+    cmds.transformLimits(reversePoints[4], rz=(-45,0),erz=(0,1))
+    cmds.transformLimits(reversePoints[5], rz=(0,45),erz=(1,0))
     
     #create attr
-    cmds.addAttr(ctrl, min=0, max=1, ln='IKFK',at='float',dv=1.0,k=True)
+    cmds.addAttr(ctrl, ln="InverseFoot", nn="_____", at="enum", en="_____", k=True)
     cmds.addAttr(ctrl, ln='FootBank',at='float',dv=0,k=True)
     cmds.addAttr(ctrl, ln='FootRoll',at='float',dv=0,k=True)
     cmds.addAttr(ctrl, ln='BallTwist',at='float',dv=0,k=True)
@@ -320,11 +336,15 @@ def biRevFoot(ctrl, endJoint):
     cmds.addAttr(ctrl, ln='ToeTwist',at='float',dv=0,k=True)
     
     #connect attr
-    cmds.connectAttr(ctrl+'.FootBank',int+'.rotateZ')
-    cmds.connectAttr(ctrl+'.FootBank',ext+'.rotateZ')
-    cmds.connectAttr(ctrl+'.FootRoll',heel+'.rotateX')
-    cmds.connectAttr(ctrl+'.FootRoll',toes+'.rotateX')
-    cmds.connectAttr(ctrl+'.ToeRoll',endJoint+'.rotateX')
-    cmds.connectAttr(ctrl+'.ToeTwist',endJoint+'.rotateY')
-    cmds.connectAttr(ctrl+'.FootTwist',toes+'.rotateY')
-    cmds.connectAttr(ctrl+'.BallTwist',heel+'.rotateY')
+    cmds.connectAttr(ctrl+'.FootBank',reversePoints[5]+'.rotateZ')
+    cmds.connectAttr(ctrl+'.FootBank',reversePoints[4]+'.rotateZ')
+    cmds.connectAttr(ctrl+'.FootRoll',reversePoints[3]+'.rotateX')
+    cmds.connectAttr(ctrl+'.FootRoll',reversePoints[1]+'.rotateX')
+    cmds.connectAttr(ctrl+'.ToeRoll',reversePoints[2]+'.rotateX')
+    cmds.connectAttr(ctrl+'.ToeTwist',reversePoints[2]+'.rotateY')
+    cmds.connectAttr(ctrl+'.FootTwist',reversePoints[1]+'.rotateY')
+    cmds.connectAttr(ctrl+'.BallTwist',reversePoints[3]+'.rotateY')
+
+    #_____ RENAME _____"""
+
+    return [reversePoints[5], reversePoints[0]]

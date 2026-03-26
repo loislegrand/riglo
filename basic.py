@@ -325,11 +325,13 @@ def controllers(jntList=[], ctrlShape='stCircle', name='C_'):
     return ctlGrp
 
 
-def duplicate(objList = []):
+def duplicate(objList = [], allHierarchy =False):
     
     if len(objList) == 0:
         objList = cmds.ls(selection=True, long=True) or []
-
+    if allHierarchy:
+        otherObjs = cmds.listRelatives(objList[-1], ad=True, typ='joint')
+        objList += otherObjs
     dupChain = []
     prnt = cmds.spaceLocator(n='LOC_' + objList[0])[0]
     LOC = prnt
