@@ -87,21 +87,21 @@ def createIkRpChain(biLeg, objs = []):
         ikTopJoint = cmds.duplicate(objs[0])
         cmds.parent(ikTopJoint[0], w=True)
         #newChainIk.insert(0, ikTopJoint)
+        newChainIk = cmds.listRelatives(ikTopJoint[0], ad=True, pa=True)[::-1]
+        newChainIk.insert(0, ikTopJoint[0])
     else:
-        """prefix = 'GD_'
+        prefix = 'GD_'
         newChainIk = bs.duplicate(objList=objs, allHierarchy =True )
-        newChainIk = newChainIk[0]
-        cmds.select(cl=True)"""
+        cmds.select(cl=True)
 
     cmds.select(objs)        
     objs = bs.doRename(0, search=prefix, replace='')
     cmds.select(cl=True)
 
-    newChainIk = cmds.listRelatives(ikTopJoint[0], ad=True, pa=True)[::-1]
-    newChainIk.insert(0, ikTopJoint[0])
+    
     cmds.select(newChainIk)
     bs.doRename(1, prefix='JNT_Ik_',)
-    bs.doRename(0, search='_GDbL', replace='')
+    bs.doRename(0, search=prefix, replace='')
     bs.doRename(0, search='_LOCbL', replace='')
     newChainIk = bs.doRename(0, search='1', replace='')
     newChainCtl = bs.controllers(jntList=objs[:4], ctrlShape='stCircle', name='C_Fk_')
@@ -120,7 +120,7 @@ def createIkRpChain(biLeg, objs = []):
     switchCtl = bs.controllers(jntList='', ctrlShape='cross', name='IkSwitch_')
     cmds.move(0, 0, -5, cmds.listRelatives(switchCtl, p=True)[0], r=True, ls=True, wd=True)
 
-
+    print(newChainIk[0], newChainIk[2])
     #Create ctl for the Ik Handle, match wrist orient, parent it 
     ikH = cmds.ikHandle(sj=newChainIk[0], ee=newChainIk[2],sol='ikRPsolver' , n='IkH'+name)
     PV = bs.controllers(jntList = ['PV_Previz'+name] ,ctrlShape='diamond', name='C_PV_')[0]
@@ -132,8 +132,9 @@ def createIkRpChain(biLeg, objs = []):
     if not biLeg:
         bs.parentCnst([IkCtl[0]], ikH[0], off=False, matx=False)
     else:
+        cmds.parent(cmds.listRelatives(newChainCtl[3], p=True)[0], newChainCtl[2] )
         topRev = biRevFoot(IkCtl[0], newChainIk[3])
-        cmds.parent(ikH, topRev[1])
+        cmds.parent(ikH[0], topRev[1])
         bs.parentCnst([IkCtl[0]], topRev[0], off=True, matx=False)
 
     #On global locator, addAttr length Up & Low limb : mult dL into the translate
@@ -153,7 +154,7 @@ def createIkRpChain(biLeg, objs = []):
     
     distMult = nd.multDL(name) #needs to be connected to the global scale parameter
     cmds.setAttr(distMult+'.input1',1)
-    cmds.setAttr(distMult+'.input2', cmds.getAttr(objs[1] +'.translateX')+cmds.getAttr(objs[2] +'.translateX'))
+    cmds.setAttr(distMult+'.input2', abs(cmds.getAttr(objs[1] +'.translateX')+cmds.getAttr(objs[2] +'.translateX')))
 
     lerpStretch = cmds.createNode('lerp', n='lerp'+name)
     cmds.connectAttr(distRatio + '.output', lerpStretch + '.input2')
@@ -197,7 +198,7 @@ def createIkRpChain(biLeg, objs = []):
         cmds.addAttr(switchCtl, ln = l, nn=n, proxy=ctlAttr[0] + '.' + l )
 
 
-    """#create the ribbon btw articulation : create line btw 2 points, match pivot with 1rst object and move a bit forward 
+    #create the ribbon btw articulation : create line btw 2 points, match pivot with 1rst object and move a bit forward 
 
     crv1tmp = bs.lineBtw(objs[0], objs[1], selectable=True)
     crv2tmp = bs.lineBtw(objs[1], objs[2], selectable=True)
@@ -268,8 +269,12 @@ def createIkRpChain(biLeg, objs = []):
     #_____ TIDY UP PART _____
     oldGD = cmds.listRelatives(objs[0], p=True)
     cmds.parent(objs[0], 'SKINNING')
-    groupIkRig = cmds.group(ribUp[1][:3], ribDwn[1][:3], ctlAttr[0], ikH[0], n='GRP_IkRig'+name)
+    groupIkRig = cmds.group(ribUp[1][:3], ribDwn[1][:3], ctlAttr[0], n='GRP_IkRig'+name)
     cmds.parent(groupIkRig, 'RIGGING')
+    if biLeg:
+        cmds.parent(topRev[0], groupIkRig)
+    else:
+        cmds.parent(ikH[0], groupIkRig)
     cmds.parent(cmds.ls('SURF_*', typ='transform'), linePV, 'NO_TRANSFORM')
     groupIkCtl = cmds.group(cmds.listRelatives(ribUp[0][-1], p=True), cmds.listRelatives(ribDwn[0][-1], p=True),
                          cmds.listRelatives(cmds.listRelatives(ribUp[1][-1], p=True)[0], p=True)[0],
@@ -315,8 +320,12 @@ def biRevFoot(ctrl, endJoint):
         name = obj.split('_')
         newName = 'RF_' + '_'.join(name[1:])
         GRP = cmds.group(n= newName, em=True)
-        cmds.matchTransform(GRP, obj)
+        cmds.matchTransform(GRP, obj, pos=True)
         reversePoints.append(GRP)
+    
+    name = foot.split('_')
+    topRev = cmds.group(n= 'RF_Top_'+ '_'.join(name[2:]), em=True)
+    cmds.matchTransform(topRev, foot, pos=True)
 
     IkSC1 = cmds.ikHandle(sj=foot,ee=endJoint,sol='ikSCsolver')
     IkScHandle1 = IkSC1[0]
@@ -333,6 +342,7 @@ def biRevFoot(ctrl, endJoint):
     cmds.parent(reversePoints[2], reversePoints[3])
     cmds.parent(reversePoints[3], reversePoints[4])
     cmds.parent(reversePoints[4], reversePoints[5])
+    cmds.parent(reversePoints[5], topRev)
     
     #transformation constraint
     cmds.transformLimits(reversePoints[1], rx =(0,45),erx=(1,0))
@@ -359,6 +369,6 @@ def biRevFoot(ctrl, endJoint):
     cmds.connectAttr(ctrl+'.FootTwist',reversePoints[1]+'.rotateY')
     cmds.connectAttr(ctrl+'.BallTwist',reversePoints[3]+'.rotateY')
 
-    #_____ RENAME _____
+    #_____ RENAME _____"""
 
-    return [reversePoints[5], reversePoints[0]]
+    return [topRev, reversePoints[0]]
