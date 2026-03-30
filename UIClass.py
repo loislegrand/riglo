@@ -4,10 +4,12 @@ import os
 import RigLo.FbxExport as FbEx
 import RigLo.builderDialog as Bd
 import RigLo.basic as bs
+import RigLo.IkFkConstruction as cstr
 import RigLo.components
 from importlib import reload
 
 reload(Bd)
+reload(cstr)
 
 class UI():
     def __init__(self):
@@ -148,7 +150,7 @@ class UI():
 
         cmds.separator( h=5)
         cmds.button(label='Reorient', c=bs.jntOrient, backgroundColor=(0.2, 0.4, 0.2) ,al='center', ann='')
-        cmds.button(label='Build', c=FbEx.exportFbx, backgroundColor=(0.2, 0.3, 0.2) ,al='center', ann='')
+        cmds.button(label='Build', c = lambda *args: cstr.createIkRpChain(False), backgroundColor=(0.2, 0.3, 0.2) ,al='center', ann='')
         cmds.setParent("..")
 
 

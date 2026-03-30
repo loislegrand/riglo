@@ -154,6 +154,13 @@ class GuideLoader():
             
         else:
             reverse = 45
+        
+        if allInfos[2] == 'Left':
+            PosX = 1
+        elif allInfos[2] == 'Right':
+            PosX = -1
+        else:
+            PosX = 0
 
         guideArm = cmds.joint(p=(9, 95, 53), n='GDqL_upLeg_{}_Left'.format(allInfos[1]))
         guideForearm = cmds.joint(p=(9, 48, reverse), n='GDqL_midLeg_{}_Left'.format(allInfos[1]))
@@ -164,13 +171,6 @@ class GuideLoader():
         InNode = cmds.joint(p=(PosX*6, 0, 58), n='LOCqL_int_{}_{}'.format(allInfos[1], allInfos[2]))
         HeelRoll = cmds.joint(p=(9, 0, 52), n='LOCqL_heel_{}_{}'.format(allInfos[1], allInfos[2]))
         cmds.setAttr(guideHandEnd+'.drawStyle', 3)
-        
-        if allInfos[2] == 'Left':
-            PosX = 1
-        elif allInfos[2] == 'Right':
-            PosX = -1
-        else:
-            PosX = 0
 
         cmds.parent(OutNode, InNode, HeelRoll, guideHandEnd)
 
